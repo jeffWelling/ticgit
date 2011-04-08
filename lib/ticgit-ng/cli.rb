@@ -20,10 +20,10 @@ module TicGitNG
     attr_accessor :out
 
     def initialize(args, path = '.', out = $stdout)
+      @out = out
       @args = args.dup
       @tic = TicGitNG.open(path, :keep_state => true)
       @options = OpenStruct.new
-      @out = out
 
       @out.sync = true # so that Net::SSH prompts show up
     rescue NoRepoFound
