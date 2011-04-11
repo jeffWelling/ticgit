@@ -66,12 +66,6 @@ If these annoy you as they do me and you've set up [apt](http://jaqque.sbih.org/
 
 And those notices should go away.
 
-**A Note about Ubuntu**
-
-NB At the time of writing (Ver 1.0.2.3) there are additional problems with TigGitWeb Ubuntu. The workaround is to add `/var/lib/gems/1.8/gems/TicGit-ng-1.0.2.3/bin` to start of PATH. viz
-
-    PATH=/var/lib/gems/1.8/gems/TicGit-ng-1.0.2.3/bin:$PATH
-
 ### Installing ##
 Installation on a Debian stable system.  Note that the command line interface for TicGit-ng can be run from Debian stable, but some of the gems required for the web interface may require you to use [apt](http://jaqque.sbih.org/kplug/apt-pinning.html) [pinning](http://jeffwelling.github.com//2010/09/05/Apt-Pinning.html) to run without errors.  See below
 
