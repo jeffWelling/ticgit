@@ -18,14 +18,29 @@ module TicGitNG
       end
 
       def execute
-        if options.repo and options.no_push
-          tic.sync_tickets(options.repo, false)
-        elsif options.repo
-          tic.sync_tickets(options.repo)
-        elsif options.no_push
-          tic.sync_tickets('origin', false)
+        if options.source
+          #sync with third party bug tracker
+          if options.repo and options.no_push
+            tic.sync_tickets(options.repo, false)
+          elsif options.repo
+            tic.sync_tickets(options.repo)
+          elsif options.no_push
+            tic.sync_tickets('origin', false)
+          else
+            tic.sync_tickets()
+          end
+          
         else
-          tic.sync_tickets()
+          #sync with TicGit
+          if options.repo and options.no_push
+            tic.sync_tickets(options.repo, false)
+          elsif options.repo
+            tic.sync_tickets(options.repo)
+          elsif options.no_push
+            tic.sync_tickets('origin', false)
+          else
+            tic.sync_tickets()
+          end
         end
       end
     end
