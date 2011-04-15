@@ -19,15 +19,13 @@ module TicGitNG
 
       def execute
         if options.source
+          if options.repo
+            puts "Notice: The -r / --repo argument is mutually exclusive with -s / --source, and is being ignored"
           #sync with third party bug tracker
-          if options.repo and options.no_push
-            tic.sync_tickets(options.repo, false)
-          elsif options.repo
-            tic.sync_tickets(options.repo)
-          elsif options.no_push
-            tic.sync_tickets('origin', false)
+          if options.no_push
+            TicGitNG::Sync.external_sync(options.source, false)
           else
-            tic.sync_tickets()
+            TicGitNG::Sync.external_sync(options.source)
           end
           
         else
