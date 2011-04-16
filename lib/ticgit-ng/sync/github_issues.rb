@@ -2,7 +2,7 @@ require 'octokit'
 
 module TicGitNG
   module Sync
-    module Github_Issues
+    class Github_Issues
       #list all tickets
       #called from lib/ticgit-ng/sync.rb, used to get all tickets
       def index
