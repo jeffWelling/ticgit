@@ -30,7 +30,7 @@ module TicGitNG
     class Github_Bugtracker
       def initialize(options={})
         raise "Gitub_Bugtracker.new requires {:username=>'' and either :token or :password}" unless 
-          options.include? :username and (options.include? :token || options.include? :password)
+          options.include?(:username) and (options.include?( :token ) || options.include?( :password ) )
 
         if options.include? :token
           @client=Octokit::Client.new( {:login=>options[:username], :token=>options[:token]} )
