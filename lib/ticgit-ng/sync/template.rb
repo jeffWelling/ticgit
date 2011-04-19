@@ -1,6 +1,6 @@
 module TicGitNG
   module Sync
-    class Github_Issues
+    class Template
       def initialize(options={})
       end
 
