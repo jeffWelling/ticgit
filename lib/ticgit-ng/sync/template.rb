@@ -2,7 +2,6 @@ module TicGitNG
   module Sync
     class Github_Issues
       def initialize(options={})
-        @client= Github_Bugtracker.new(options)
       end
       #list all tickets
       #called from lib/ticgit-ng/sync.rb, used to get all tickets
