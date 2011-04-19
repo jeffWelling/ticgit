@@ -3,18 +3,15 @@ module TicGitNG
     class Github_Issues
       def initialize(options={})
       end
-      #list all tickets
-      #called from lib/ticgit-ng/sync.rb, used to get all tickets
-      def index
-      end
-
-      #get all info for one ticket
-      #
-      def show
-      end
 
       #create new ticket
       def create
+      end
+
+      #read tickets
+      #if ticket number is not nil, return associated ticket
+      #else return all tickets.
+      def read( ticket_number=nil )
       end
 
       #alter an existing ticket
