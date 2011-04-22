@@ -1,6 +1,6 @@
 module TicGitNG
   module Sync
-    class Template
+    class Template < SyncableTicket
       def initialize(options={})
       end
 

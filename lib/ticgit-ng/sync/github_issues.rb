@@ -2,7 +2,7 @@ require 'octokit'
 
 module TicGitNG
   module Sync
-    class Github_Issues
+    class Github_Issues < SyncableTicket
       def initialize(options={})
         return Github_Bugtracker.new(options)
       end
@@ -30,7 +30,7 @@ module TicGitNG
       end
     end
     #Class used to interface with Octokit (Github Issues)
-    class Github_Bugtracker
+    class Github_Bugtracker 
       def initialize(options={})
         raise "Gitub_Bugtracker.new requires {:username=>'' and either :token or :password}" unless 
           options.has_key?(:username) and (options.has_key?( :token ) || options.has_key?( :password ) )
