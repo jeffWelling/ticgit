@@ -19,7 +19,7 @@ module TicGitNG
           issue_num.nil? or issue_num.class==Fixnum
        
         if issue_num.nil? 
-          issues=@client.issues(repo)
+          issues=@client.issues(repo) + @client.issues(repo, 'closed')
         else
           issues=@client.issues(repo,issue_num)
         end
