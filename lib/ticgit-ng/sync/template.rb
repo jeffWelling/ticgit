@@ -2,7 +2,9 @@ module TicGitNG
   module Sync
     class Template < SyncableTicket
       def initialize(options={})
+        @static_fields=%w()
       end
+      attr_reader :static_fields
 
       #create new ticket
       def create
