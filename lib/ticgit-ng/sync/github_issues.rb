@@ -10,7 +10,24 @@ module TicGitNG
       def create
       end
       
-      def read
+      #read all issues in repo if issue_num.nil?
+      #read issue_num in repo if issue_num.class==Fixnum
+      def read( repo, issue_num=nil )
+        raise "read(repo,issue_num): issue must be nil or integer" unless
+          issue_num.nil? or issue_num.class==Fixnum
+       
+        if issue_num.nil? 
+          issues=@client.issues(repo)
+        else
+          issues=@client.issues(repo,issue_num)
+        end
+        issues=[issues] unless issues.class==Array
+
+        issues.map {|issue|
+          SyncableTicket.new({
+              #:attr=>x
+          })
+        }
       end
       
       def update
