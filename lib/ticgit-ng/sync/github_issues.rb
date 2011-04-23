@@ -5,7 +5,7 @@ module TicGitNG
     class Github_Issues < GenericBugtracker
       def initialize(options={})
         @client=Github_Issues_Bugtracker.new(options).client
-        @static_attributes=%w()
+        @static_attributes=%w(created_at gravatar_id html_url)
       end
       attr_reader :static_attributes
 
