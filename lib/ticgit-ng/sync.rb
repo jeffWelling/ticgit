@@ -45,6 +45,15 @@ module TicGitNG
     #by lines in the form of "#KEY=VALUE" where key is an attribute such
     #as state, title, or label.
     def parse_attrs_for_updates attrs, statics
+      updates=[]
+      comment_regex=/\n#[^=]*="[^"]*"/
+      attrs.comments.each {|comment|
+        text=comment.comment_body
+        while text[comment_regex]
+          match=text[comment_regex]
+          text.gsub!(match,'')
+          updates << match
+      }
     end
 
     #source is in the format of github:jeffWelling/ticgit
