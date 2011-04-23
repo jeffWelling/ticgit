@@ -107,14 +107,14 @@ module TicGitNG
   end
 
   class SyncableTicket
-    def initialize(attributes)
+    def initialize(attributes, static_attributes)
       raise "SyncableTicket.new(attributes): attributes has to be a hash" unless
         attributes.class==Hash
 
       raise "SyncableTicket.new(attributes): attributes has to at least have the standard attributes: #{standard_attributes.inspect}" unless
         has_standard_attributes(attributes)
 
-      attributes= parse_attrs_for_updates(attributes)
+      attributes= parse_attrs_for_updates(attributes, static_attributes)
 
       @attributes=attributes
     end
