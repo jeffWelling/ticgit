@@ -72,9 +72,11 @@ module TicGitNG
         options={:username=>username,:password=>password}
       end
       
-      github_bugtracker= eval(
+      bugtracker= eval(
         "TicGitNG::Sync::#{sync_mod_object}.new(#{options.inspect})")
-      #read bug tracker
+
+      all_bugs= bugtracker.read( repo )
+
       #sort chronologically
       #merge tickets together
 
