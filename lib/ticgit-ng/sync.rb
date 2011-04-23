@@ -12,6 +12,20 @@ module TicGitNG
 
     end
   end
+  class GenericBugtracker
+    def create
+    end
+
+    def read
+    end
+    
+    def update
+    end
+    
+    def destroy
+    end
+  end
+
   class SyncableTicket
     def create
     end
