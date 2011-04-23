@@ -117,11 +117,19 @@ module TicGitNG
       attributes= parse_attrs_for_updates(attributes, static_attributes)
 
       @attributes=attributes
+
+      #This will allow us to use calls like
+      #  ticket=SyncableTicket.new(...)
+      #  ticket.title
+      #  ticket.body
+      #  ...
+      attributes.each {|attribute| attr_reader attribute.to_sym }
     end
 
-    def get_attribute( attr )
-      @attributes[attr]
+    def get_attribute attribute=nil
+      attribute ? (@attributes[attribute]) : (@attributes)
     end
+
 
     def create
     end

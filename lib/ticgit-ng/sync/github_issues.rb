@@ -25,10 +25,20 @@ module TicGitNG
         end
         issues=[issues] unless issues.class==Array
 
+        #populate comments for each ticket
+        
+        #Rename the github issues values to syncableticket values
+        issues=issues.each {|issue| issue.map {|key, value|
+          key='created_on' if key=='created_at'
+          key='label' if key=='labels'
+          [key,value]
+        }}
+
+        #Creating SyncableTickets for Github Issue tickets is fairly
+        #trivial, but this step may be more complicated for other bug trackers
+        #when the API used doesn't return hash objects
         issues.map {|issue|
-          SyncableTicket.new({
-              #:attr=>x
-          })
+          SyncableTicket.new( issue.to_hash, @static_attributes )
         }
       end
       
