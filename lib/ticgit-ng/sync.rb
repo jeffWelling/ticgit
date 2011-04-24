@@ -138,6 +138,9 @@ module TicGitNG
       attribute ? (@attributes[attribute]) : (@attributes)
     end
 
+    def set key value
+      @attributes[key]=value
+    end
 
     def create
     end
