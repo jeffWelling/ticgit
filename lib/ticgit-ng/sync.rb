@@ -53,6 +53,7 @@ module TicGitNG
           match=text[comment_regex]
           text.gsub!(match,'')
           updates << match
+        end
       }
       updates.each {|update|
         attr_key,attr_value = update.strip.gsub(/#/,'')
