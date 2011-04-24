@@ -54,6 +54,13 @@ module TicGitNG
           text.gsub!(match,'')
           updates << match
       }
+      updates.each {|update|
+        attr_key,attr_value = update.strip.gsub(/#/,'')
+        attr_key=attr_key.downcase
+        next if statics.include?(attr_key) 
+        attrs.set(attr_key, attr_value)
+      }
+      attrs
     end
 
     #source is in the format of github:jeffWelling/ticgit
