@@ -18,6 +18,8 @@ module TicGitNG
         raise "read(repo,issue_num): issue must be nil or integer" unless
           issue_num.nil? or issue_num.class==Fixnum
        
+        #The Github API only returns tickets with the state 'open' by default, so to get
+        #all tickets we have to query twice. Unless we're only looking for one ticket.
         if issue_num.nil? 
           issues=@client.issues(repo) + @client.issues(repo, 'closed')
         else
