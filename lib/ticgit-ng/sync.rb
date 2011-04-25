@@ -75,7 +75,7 @@ module TicGitNG
       source[/[^:]*$/]
     end
 
-    def self.external_sync( source, push )
+    def self.external_sync( source, push=true )
       bugtracker= get_bugtracker(source)
       repo= get_repo(source)
       
@@ -88,12 +88,9 @@ module TicGitNG
       else
         options={:username=>username,:password=>password}
       end
-      
-      bugtracker= eval(
-        "TicGitNG::Sync::#{sync_mod_object}.new(#{options.inspect})")
-
+      s="#{sync_mod_object}.new(#{options.inspect})"
+      bugtracker= eval(s)
       all_bugs= bugtracker.read( repo )
-
       #sort chronologically
       #merge tickets together
 
@@ -138,7 +135,7 @@ module TicGitNG
       attribute ? (@attributes[attribute]) : (@attributes)
     end
 
-    def set key value
+    def set key, value
       @attributes[key]=value
     end
 
