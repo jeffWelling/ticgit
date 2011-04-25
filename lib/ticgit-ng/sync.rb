@@ -80,15 +80,8 @@ module TicGitNG
       repo= get_repo(source)
       
       sync_mod_object= get(bugtracker)
-
-      username='FUBAR'
-      token='RABUF'
-      if token
-        options={:username=>username,:token=>token}
-      else
-        options={:username=>username,:password=>password}
-      end
-      s="#{sync_mod_object}.new(#{options.inspect})"
+      auth_info= get_auth_info
+      s="#{sync_mod_object}.new(#{auth_info.inspect})"
       bugtracker= eval(s)
       all_bugs= bugtracker.read( repo )
       #sort chronologically
@@ -96,6 +89,12 @@ module TicGitNG
 
 
     end
+    def self.get_auth_info
+      auth_info={}
+      auth_info.merge!( {:username=> `git config github.user`.strip} )
+      auth_info.merge!( {:token=> `git config github.token`.strip} )
+      auth_info
+    end 
   end
   class GenericBugtracker
     def create
