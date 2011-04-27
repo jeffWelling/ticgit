@@ -4,7 +4,6 @@ module TicGitNG
   module Sync
     class Github_Issues < GenericBugtracker
       def initialize(options={})
-        @client=Github_Issues_Bugtracker.new(options).client
         @static_attributes=%w(created_at gravatar_id html_url)
       end
       attr_reader :static_attributes
@@ -18,16 +17,20 @@ module TicGitNG
         raise "read(repo,issue_num): issue must be nil or integer" unless
           issue_num.nil? or issue_num.class==Fixnum
        
+        clienty=Octokit::Client.new( { :username => 'jeffWelling', :token => `git config github.token`.strip } )
         #The Github API only returns tickets with the state 'open' by default, so to get
         #all tickets we have to query twice. Unless we're only looking for one ticket.
         if issue_num.nil? 
-          issues=@client.issues(repo) + @client.issues(repo, 'closed')
+          issues=(clienty.issues(repo)) + (clienty.issues(repo, 'closed'))
         else
-          issues=@client.issues(repo,issue_num)
+          issues=clienty.issues(repo,issue_num)
         end
         issues=[issues] unless issues.class==Array
 
         #populate comments for each ticket
+        issues.each_index {|issues_num|
+          issues[issues_num]['comments']= clienty.issue_comments(repo, issues[issues_num].number)
+        }
         
         #Rename the github issues values to syncableticket values
         issues=issues.each {|issue| issue.map {|key, value|
