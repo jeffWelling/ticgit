@@ -152,7 +152,11 @@ module TicGitNG
       #  ticket.title
       #  ticket.body
       #  ...
-      attributes.each {|attribute| attr_reader attribute.to_sym }
+      (class << self ; self ; end).class_eval {
+        attributes.each_key {|attribute|
+          attr_accessor attribute.to_sym
+        }
+      }
     end
 
     def get_attribute attribute=nil
