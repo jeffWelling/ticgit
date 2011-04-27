@@ -42,16 +42,17 @@ module TicGitNG
 
     #These are the standard attributes that should be found
     #across all bug trackers, perhaps with various other names
-    def standard_attributes
+    def self.standard_attributes
       {:title=>'',
       :body=>'',
       :created_on=>'',
       :state=>'',
       :label=>'',
-      :comments=>:optional,
-      :comment_created_on=>:depends_on_comments,
-      :comment_author=>:depends_on_comments,
-      :comment_body=>:depends_on_comments
+      :comments=>{
+        :comment_created_on=>:depends_on_comments,
+        :comment_author=>:depends_on_comments,
+        :comment_body=>:depends_on_comments
+        }
       }
     end
 
