@@ -19,11 +19,25 @@ module TicGitNG
 
     #return value is boolean, true if attr has all of the
     #standard attributes, as defined in standard_attributes()
-    def has_standard_attributes attr
-      result=standard_attributes.collect {|key,value|
-        attr.has_key? key
+    def self.has_standard_attributes attrs
+      require 'pp'
+      pp attrs
+      TicGitNG::Sync.standard_attributes.each {|attribute, value|
+        if attribute==:comments
+          if (attrs.has_key?(attribute) or attrs.has_key?(attribute.to_s))
+            attribute=attribute.to_s unless attrs.has_key?(attribute)
+            attrs[attribute].each {|comment|
+              value.each_key {|comment_value|
+                return false unless (comment.has_key?(comment_value) or comment.has_key?(comment_value.to_s))
+              }
+            }
+          end
+        else
+          return false unless (attrs.has_key?(attribute) or attrs.has_key?(attribute.to_s))
+        end
+        
       }
-      !result.include?(false)
+
     end
 
     #These are the standard attributes that should be found
