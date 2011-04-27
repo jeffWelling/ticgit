@@ -160,7 +160,11 @@ module TicGitNG
     end
 
     def get_attribute attribute=nil
-      attribute ? (@attributes[attribute]) : (@attributes)
+      if attribute
+        return (@attributes[attribute.to_s] || @attributes[to.sym])
+      else
+        @attributes
+      end
     end
 
     def set key, value
