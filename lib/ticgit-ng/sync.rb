@@ -139,12 +139,6 @@ module TicGitNG
 
       attributes= TicGitNG::Sync.parse_attrs_for_updates(attributes, static_attributes)
 
-      #FIXME Convert all attribute keys to symbols before storing
-      #For convenience, we allow attribute keys to be strings or symbols
-      #but we need to convert them to symbols to standardize the SyncableTicket
-      #attributes
-
-
       @attributes=attributes
 
       #This will allow us to use calls like
@@ -169,18 +163,6 @@ module TicGitNG
 
     def set key, value
       @attributes[key]=value
-    end
-
-    def create
-    end
-
-    def read
-    end
-    
-    def update
-    end
-    
-    def destroy
     end
   end
 end
