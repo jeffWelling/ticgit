@@ -33,11 +33,18 @@ module TicGitNG
         }
         
         #Rename the github issues values to syncableticket values
-        issues=issues.each {|issue| issue.map {|key, value|
-          key='created_on' if key=='created_at'
-          key='label' if key=='labels'
-          [key,value]
-        }}
+        issues.map! {|issue| 
+          issue=issue.to_hash
+          issue['comments'].map! {|comment| comment.to_hash }
+
+          issue.merge!( {:created_on=>issue['created_at'], :label=>issue['labels']} )
+          issue['comments'].map! {|comment|
+            comment.merge!( {:comment_created_on=>comment['created_at'],
+                           :comment_author=> comment['user'],
+                           :comment_body=> comment['body']} )
+          }
+          issue
+        }
 
         #Creating SyncableTickets for Github Issue tickets is fairly
         #trivial, but this step may be more complicated for other bug trackers
