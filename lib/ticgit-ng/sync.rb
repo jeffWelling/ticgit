@@ -59,11 +59,15 @@ module TicGitNG
     #parse the comments in attrs for updates of static fields, denoted
     #by lines in the form of "#KEY=VALUE" where key is an attribute such
     #as state, title, or label.
-    def parse_attrs_for_updates attrs, statics
+    def self.parse_attrs_for_updates attrs, statics
       updates=[]
       comment_regex=/\n#[^=]*="[^"]*"/
-      attrs.comments.each {|comment|
-        text=comment.comment_body
+      comment_key='comments'
+      comment_key=comment_key.to_sym unless attrs.has_key?(comment_key)
+      attrs[comment_key].each {|comment|
+        c_b_key='comment_body'
+        c_b_key=c_b_key.to_sym unless comment.has_key?(c_b_key)
+        text=comment[c_b_key]
         while text[comment_regex]
           match=text[comment_regex]
           text.gsub!(match,'')
@@ -133,7 +137,13 @@ module TicGitNG
       raise "\n\nSyncableTicket.new(attributes): attributes has to at least have the standard attributes: \n#{TicGitNG::Sync.standard_attributes.inspect}\n" unless
         TicGitNG::Sync.has_standard_attributes(attributes)
 
-      attributes= parse_attrs_for_updates(attributes, static_attributes)
+      attributes= TicGitNG::Sync.parse_attrs_for_updates(attributes, static_attributes)
+
+      #FIXME Convert all attribute keys to symbols before storing
+      #For convenience, we allow attribute keys to be strings or symbols
+      #but we need to convert them to symbols to standardize the SyncableTicket
+      #attributes
+
 
       @attributes=attributes
 
