@@ -97,10 +97,10 @@ module TicGitNG
       repo= get_repo(source)
       
       sync_mod_object= get(bugtracker)
-      auth_info= get_auth_info
+      auth_info= get_auth_info.merge({:repo=>repo})
       s="#{sync_mod_object}.new(#{auth_info.inspect})"
       bugtracker= eval(s)
-      all_bugs= bugtracker.read( repo )
+      all_bugs= bugtracker.read
       #sort chronologically
       #merge tickets together
 

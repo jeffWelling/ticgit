@@ -5,6 +5,7 @@ module TicGitNG
     class Github_Issues < GenericBugtracker
       include Octopi
       def initialize(options={})
+        @options=options
         @static_attributes=%w(created_at gravatar_id html_url)
       end
       attr_reader :static_attributes
@@ -14,18 +15,19 @@ module TicGitNG
       
       #read all issues in repo if issue_num.nil?
       #read issue_num in repo if issue_num.class==Fixnum
-      def read( repo, issue_num=nil )
+      def read( repo=nil, issue_num=nil )
         raise "read(repo,issue_num): issue must be nil or integer" unless
           issue_num.nil? or issue_num.class==Fixnum
 
         issues=nil
-        auth=TicGitNG::Sync.get_auth_info
-        authenticated_with :login=>auth[:username], :token=>auth[:token] do
+        user= repo.nil? ? get_username(@options[:repo]) : get_username(@repo)
+        repo= repo.nil? ? get_repo_name(@options[:repo]): get_repo_name(@repo)
+        authenticated_with :login=>@options[:user], :token=>@options[:token] do
           if issue_num.nil?
-            issues=Issue.find_all( :user=> get_username(repo), :repo=> get_repo_name(repo), :state=>'open' )
-            issues+= Issue.find_all( :user=> get_username(repo), :repo=> get_repo_name(repo), :state=>'closed' )
+            issues=Issue.find_all( :user=> user, :repo=> repo, :state=>'open' )
+            issues+= Issue.find_all( :user=> user, :repo=> repo, :state=>'closed' )
           else
-            issues=[Issue.find(:user=> get_username(repo), :repo=> get_repo_name(repo), :state=>'closed' )]
+            issues=[Issue.find(:user=> user, :repo=> repo, :state=>'closed' )]
           end
         end
         
