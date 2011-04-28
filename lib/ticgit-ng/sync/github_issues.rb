@@ -17,8 +17,6 @@ module TicGitNG
           title.class==String and body.class==String
 
         issue=nil
-        require 'pp'
-        pp @options
         authenticated_with :login=>@options[:user], :token=>@options[:token] do
           hashify Issue.open( :user=>get_username(@options[:repo]), :repo=>get_repo_name(@options[:repo]),
                            :params=>{:title=>title,:body=>body} )
