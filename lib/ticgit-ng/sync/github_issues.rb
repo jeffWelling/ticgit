@@ -49,26 +49,7 @@ module TicGitNG
         #when the API used doesn't return hash objects
         issues.map {|issue|
           next unless issue.class==Octopi::Issue
-          SyncableTicket.new( {
-            :body=>       issue.body,
-            :created_on=> issue.created_at,
-            :label=>      issue.labels,
-            :github_id=>  issue.number,
-            :repository=> issue.repository.to_s,
-            :state=>      issue.state,
-            :title=>      issue.title,
-            :updated_at=> issue.updated_at,
-            :user=>       issue.user,
-            :votes=>      issue.votes,
-            :comments=>   issue.comments.map {|comment|
-             {:comment_body               =>comment.body,
-              :comment_author             =>comment.user,
-              :comment_created_on         =>comment.created_at,
-              :comment_author_gravatar_id =>comment.gravatar_id,
-              :comment_id                 =>comment.id,
-              :comment_updated_on         =>comment.updated_at}
-            }
-          }, @static_attributes )
+          SyncableTicket.new( hashify(issue), @static_attributes )
         }
       end
       
@@ -86,6 +67,28 @@ module TicGitNG
 
       def get_repo_name source
         source[/[^\/]*$/]
+      end
+
+      def hashify issue
+        {   :body=>       issue.body,
+            :created_on=> issue.created_at,
+            :label=>      issue.labels,
+            :github_id=>  issue.number,
+            :repository=> issue.repository.to_s,
+            :state=>      issue.state,
+            :title=>      issue.title,
+            :updated_at=> issue.updated_at,
+            :user=>       issue.user,
+            :votes=>      issue.votes,
+            :comments=>   issue.comments.map {|comment|
+             {:comment_body               =>comment.body,
+              :comment_author             =>comment.user,
+              :comment_created_on         =>comment.created_at,
+              :comment_author_gravatar_id =>comment.gravatar_id,
+              :comment_id                 =>comment.id,
+              :comment_updated_on         =>comment.updated_at}
+            }
+        }
       end
     end
   end
