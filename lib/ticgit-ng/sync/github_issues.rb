@@ -51,7 +51,11 @@ module TicGitNG
         }
       end
       
-      def update
+      #Receives a SyncableTicket and synchronizes it with the existing
+      #version of the same ticket in Github Issues
+      #When writing your own version, don't forget to use comments for any
+      #attributes which can't be updated.
+      def update ticket
       end
       
       def destroy
