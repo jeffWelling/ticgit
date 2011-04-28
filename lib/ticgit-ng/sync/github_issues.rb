@@ -10,7 +10,20 @@ module TicGitNG
       end
       attr_reader :static_attributes
 
-      def create
+      #create a new issue
+      #to create a comment on an existing issue, use update()
+      def create( title, body )
+        raise "Github_Issues.create(title,body): title and body must be strings" unless
+          title.class==String and body.class==String
+
+        issue=nil
+        require 'pp'
+        pp @options
+        authenticated_with :login=>@options[:user], :token=>@options[:token] do
+          hashify Issue.open( :user=>get_username(@options[:repo]), :repo=>get_repo_name(@options[:repo]),
+                           :params=>{:title=>title,:body=>body} )
+        end
+
       end
       
       #read all issues in repo if issue_num.nil?
