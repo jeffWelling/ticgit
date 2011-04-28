@@ -1,8 +1,9 @@
-require 'octokit'
+require 'octopi'
 
 module TicGitNG
   module Sync
     class Github_Issues < GenericBugtracker
+      include Octopi
       def initialize(options={})
         @static_attributes=%w(created_at gravatar_id html_url)
       end
@@ -16,41 +17,43 @@ module TicGitNG
       def read( repo, issue_num=nil )
         raise "read(repo,issue_num): issue must be nil or integer" unless
           issue_num.nil? or issue_num.class==Fixnum
-       
-        clienty=Octokit::Client.new( { :username => 'jeffWelling', :token => `git config github.token`.strip } )
-        #The Github API only returns tickets with the state 'open' by default, so to get
-        #all tickets we have to query twice. Unless we're only looking for one ticket.
-        if issue_num.nil? 
-          issues=(clienty.issues(repo)) + (clienty.issues(repo, 'closed'))
-        else
-          issues=clienty.issues(repo,issue_num)
+
+        issues=nil
+        auth=TicGitNG::Sync.get_auth_info
+        authenticated_with :login=>auth[:username], :token=>auth[:token] do
+          if issue_num.nil?
+            issues=Issue.find_all( :user=> get_username(repo), :repo=> get_repo_name(repo), :state=>'open' )
+            issues+= Issue.find_all( :user=> get_username(repo), :repo=> get_repo_name(repo), :state=>'closed' )
+          else
+            issues=[Issue.find(:user=> get_username(repo), :repo=> get_repo_name(repo), :state=>'closed' )]
+          end
         end
-        issues=[issues] unless issues.class==Array
-
-        #populate comments for each ticket
-        issues.each_index {|issues_num|
-          issues[issues_num]['comments']= clienty.issue_comments(repo, issues[issues_num].number)
-        }
         
-        #Rename the github issues values to syncableticket values
-        issues.map! {|issue| 
-          issue=issue.to_hash
-          issue['comments'].map! {|comment| comment.to_hash }
-
-          issue.merge!( {:created_on=>issue['created_at'], :label=>issue['labels']} )
-          issue['comments'].map! {|comment|
-            comment.merge!( {:comment_created_on=>comment['created_at'],
-                           :comment_author=> comment['user'],
-                           :comment_body=> comment['body']} )
-          }
-          issue
-        }
-
         #Creating SyncableTickets for Github Issue tickets is fairly
         #trivial, but this step may be more complicated for other bug trackers
         #when the API used doesn't return hash objects
         issues.map {|issue|
-          SyncableTicket.new( issue.to_hash, @static_attributes )
+          next unless issue.class==Octopi::Issue
+          SyncableTicket.new( {
+            :body=>       issue.body,
+            :created_on=> issue.created_at,
+            :label=>      issue.labels,
+            :github_id=>  issue.number,
+            :repository=> issue.repository.to_s,
+            :state=>      issue.state,
+            :title=>      issue.title,
+            :updated_at=> issue.updated_at,
+            :user=>       issue.user,
+            :votes=>      issue.votes,
+            :comments=>   issue.comments.map {|comment|
+             {:comment_body               =>comment.body,
+              :comment_author             =>comment.user,
+              :comment_created_on         =>comment.created_at,
+              :comment_author_gravatar_id =>comment.gravatar_id,
+              :comment_id                 =>comment.id,
+              :comment_updated_on         =>comment.updated_at}
+            }
+          }, @static_attributes )
         }
       end
       
@@ -60,6 +63,15 @@ module TicGitNG
       def destroy
       end
 
+      private
+
+      def get_username source
+        source[/^[^\/]*/]
+      end
+
+      def get_repo_name source
+        source[/[^\/]*$/]
+      end
     end
   end
 end
