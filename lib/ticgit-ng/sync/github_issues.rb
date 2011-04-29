@@ -31,14 +31,14 @@ module TicGitNG
           issue_num.nil? or issue_num.class==Fixnum
 
         issues=nil
-        user= repo.nil? ? get_username(@options[:repo]) : get_username(@repo)
-        repo= repo.nil? ? get_repo_name(@options[:repo]): get_repo_name(@repo)
+        user= repo.nil? ? get_username(@options[:repo]) : get_username(repo)
+        repo= repo.nil? ? get_repo_name(@options[:repo]): get_repo_name(repo)
         authenticated_with :login=>@options[:username], :token=>@options[:token] do
           if issue_num.nil?
             issues=Issue.find_all( :user=> user, :repo=> repo, :state=>'open' )
             issues+= Issue.find_all( :user=> user, :repo=> repo, :state=>'closed' )
           else
-            issues=[Issue.find(:user=> user, :repo=> repo, :state=>'closed' )]
+            issues=[Issue.find(:user=> user, :repo=> repo, :number=>issue_num )]
           end
         end
         
