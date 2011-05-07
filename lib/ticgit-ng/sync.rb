@@ -57,7 +57,7 @@ module TicGitNG
     #parse the comments in attrs for updates of static fields, denoted
     #by lines in the form of "#KEY=VALUE" where key is an attribute such
     #as state, title, or label.
-    def self.parse_attrs_for_updates attrs, statics
+    def self.parse_attrs_for_updates attrs, malleable
       updates=[]
       comment_regex=/\n#[^=]*="[^"]*"/
       comment_key='comments'
@@ -75,7 +75,7 @@ module TicGitNG
       updates.each {|update|
         attr_key,attr_value = update.strip.gsub(/#/,'')
         attr_key=attr_key.downcase
-        next if statics.include?(attr_key) 
+        next unless malleable.include?(attr_key) 
         attrs.set(attr_key, attr_value)
       }
       attrs
@@ -128,14 +128,14 @@ module TicGitNG
   end
 
   class SyncableTicket
-    def initialize(attributes, static_attributes)
+    def initialize(attributes, attr_info)
       raise "SyncableTicket.new(attributes): attributes has to be a hash" unless
         attributes.class==Hash
       
       raise "\n\nSyncableTicket.new(attributes): attributes has to at least have the standard attributes: \n#{TicGitNG::Sync.standard_attributes.inspect}\n" unless
         TicGitNG::Sync.has_standard_attributes(attributes)
 
-      attributes= TicGitNG::Sync.parse_attrs_for_updates(attributes, static_attributes)
+      attributes= TicGitNG::Sync.parse_attrs_for_updates(attributes, attr_info[:malleable])
 
       @attributes=attributes
 

@@ -6,9 +6,12 @@ module TicGitNG
       include Octopi
       def initialize(options={})
         @options=options
-        @static_attributes=%w(created_at gravatar_id html_url)
+        #:malleable attributes are those which can be directly updated instead of using # comments
+        #:static attributes
+        @attr_info={:malleable=>%w(title body comments updated_at label),
+                    :static=>%w(user repository github_id created_at gravatar_id html_url)}
       end
-      attr_reader :static_attributes
+      attr_reader :attr_info
 
       #create a new issue
       #to create a comment on an existing issue, use update()
@@ -21,7 +24,6 @@ module TicGitNG
           hashify Issue.open( :user=>get_username(@options[:repo]), :repo=>get_repo_name(@options[:repo]),
                            :params=>{:title=>title,:body=>body} )
         end
-
       end
       
       #read all issues in repo if issue_num.nil?
@@ -47,7 +49,7 @@ module TicGitNG
         #when the API used doesn't return hash objects
         issues.map {|issue|
           next unless issue.class==Octopi::Issue
-          SyncableTicket.new( hashify(issue), @static_attributes )
+          SyncableTicket.new( hashify(issue), @attr_info )
         }
       end
       
