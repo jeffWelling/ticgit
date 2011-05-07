@@ -153,7 +153,7 @@ module TicGitNG
 
     def get_attribute attribute=nil
       if attribute
-        return (@attributes[attribute.to_s] || @attributes[to.sym])
+        return (@attributes[attribute.to_s] || @attributes[attribute.to_sym])
       else
         @attributes
       end
