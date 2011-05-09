@@ -145,8 +145,15 @@ module TicGitNG
       #  ticket.body
       #  ...
       (class << self ; self ; end).class_eval {
-        attributes.each_key {|attribute|
-          attr_accessor attribute.to_sym
+        attributes.each_key {|thing|
+          eval("
+                def #{thing}
+                  return get_attribute[:#{thing}]
+                end")
+          eval("
+                def #{thing}= x
+                  return get_attribute[:#{thing}]= x
+                end")
         }
       }
     end
