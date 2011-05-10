@@ -405,12 +405,7 @@ This will create a TicGit-ng-VERSION.gem file for you to install.
 
 More information on developing TicGit-ng and collaborating with other TicGit-ng developers at [here](https://github.com/jeffWelling/ticgit/wiki/Development)
 
-### Alternatives ###
-
-ditz   
-bugs everywhere  
-git-issues  
-sd  
+### Alternatives ### 
 
 [Alternatives wiki page](https://github.com/jeffWelling/ticgit/wiki/Alternatives)
 
