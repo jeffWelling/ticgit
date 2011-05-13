@@ -59,14 +59,17 @@ module TicGitNG
       #at a higher level. update() is only called to update the associated ticket
       #with new values.
       def update repo, ticket
-        raise "Cannot update ticket without github_id" unless ticket.github_id
+        unless ticket.github_id
+          raise "Cannot update ticket without github_id" 
+        end
+
         #read ticket from github so we can tell which fields need updating
         external_ticket= read( repo, ticket.github_id )
 
         #check title,body
-        unless (ticket.title == external_ticket.body && ticket.body == external_ticket.body) do
+        unless (ticket.title == external_ticket.body && ticket.body == external_ticket.body)
           authenticated_with :login=>@options[:username], :token=>@options[:token] do
-            issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>title.github_id)
+            issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>ticket.github_id)
             issue.title = ticket.title
             issue.body = ticket.body
             issue.save
@@ -104,6 +107,7 @@ module TicGitNG
               issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>title.github_id)
               labels_to_update.each {|label| issue.remove_label(label) }
             end
+          end
         end
 
         #check comment_body
