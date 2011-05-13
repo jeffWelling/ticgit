@@ -111,34 +111,37 @@ module TicGitNG
         end
 
         #check comments
-        comments_to_update= ticket.comments.collect{|comment| external_ticket.comments.include?(comment) ? nil : comment }.compact
-        unless comments_to_update.empty?
-          authenticated_with :login=>@options[:username], :token=>@options[:token] do
-            issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>ticket.github_id)
-            #comments_to_update contains not only comments which don't exist on external_ticket yet
-            #but also comments which have changed locally that need updating on external_ticket
+        comments_to_add= ticket.comments.collect {|comment| external_ticket.comments.map {|external_comment|
+          external_comment[:comment_id]==comment[:comment_id]}.compact.include?(true) ? nil : comment }.compact
+        #comments_to_update=
 
-            #add comments that don't exist in external_ticket
-            comments_to_update.collect {|comment| 
-              #nil if this comment is already on external_ticket based on comment id
-              external_ticket.comments.map {|external_comment| 
-                external_comment.comment_id==comment.comment_id 
-              }.compact.include?(true) ? nil : comment
+        #sort chronologically
+        #we cant actually go back in time and post the comment to Github at the right time to get the correct
+        #created
+        m={}
+        comments_to_add.each {|comment|
+          m.merge!({ comment[:comment_created_on]=>[:add, comment] })
+        }
+        comments_to_update.each {|comment|
+          m.merge!({ comment[:comment_updated_on]=>[:update, comment] })
+        }
+        m=m.sort
 
-            }.compact.each {|comment|
-              #these comments have to go to external_ticket
-              #issue.add_comment( 
-            }
-          end
+        authenticated_with :login=>@options[:username], :token=>@options[:token] do
+          issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>ticket.github_id)
+
+          m.each {|item|
+            case item[1][0]
+            when :add
+              #add the comment in item[1][1]
+              issue.add_comment(
+            when :update
+              #update with the comment in item[1][1]
+            end
+          }
+
         end
         
-        x=eval("fubar")
-
-        #ticgit_ticket.title="fubar"
-        #ticgit_ticket.body="fubar fubar fubar"
-        #ticket=ticgit_ticket
-        #
-        #
       end
       
       def destroy
