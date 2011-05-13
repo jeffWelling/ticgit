@@ -15,14 +15,14 @@ module TicGitNG
 
       #create a new issue
       #to create a comment on an existing issue, use update()
-      def create( title, body )
-        raise "Github_Issues.create(title,body): title and body must be strings" unless
-          title.class==String and body.class==String
+      def create(syncable_ticket)
+        raise "create(syncable_ticket) must be passed a TicGitNG::SyncableTicket object" unless
+          syncable_ticket.class==TicGitNG::SyncableTicket
 
-        issue=nil
+        #FIXME body needs to include '#' comments for attribtues from other bugtrackers
         authenticated_with :login=>@options[:user], :token=>@options[:token] do
           hashify Issue.open( :user=>get_username(@options[:repo]), :repo=>get_repo_name(@options[:repo]),
-                           :params=>{:title=>title,:body=>body} )
+                  :params=>{:title=>syncable_ticket.title,:body=>syncable_ticket.body << format_ticket_4_github(syncable_ticket.body)} )
         end
       end
       
