@@ -44,6 +44,7 @@ module TicGitNG
       {:title=>'',
       :body=>'',
       :created_on=>'',
+      :created_by=>'',
       :state=>'',
       :label=>'',
       :comments=>{
