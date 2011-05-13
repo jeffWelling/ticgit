@@ -110,7 +110,27 @@ module TicGitNG
           end
         end
 
-        #check comment_body
+        #check comments
+        comments_to_update= ticket.comments.collect{|comment| external_ticket.comments.include?(comment) ? nil : comment }.compact
+        unless comments_to_update.empty?
+          authenticated_with :login=>@options[:username], :token=>@options[:token] do
+            issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>ticket.github_id)
+            #comments_to_update contains not only comments which don't exist on external_ticket yet
+            #but also comments which have changed locally that need updating on external_ticket
+
+            #add comments that don't exist in external_ticket
+            comments_to_update.collect {|comment| 
+              #nil if this comment is already on external_ticket based on comment id
+              external_ticket.comments.map {|external_comment| 
+                external_comment.comment_id==comment.comment_id 
+              }.compact.include?(true) ? nil : comment
+
+            }.compact.each {|comment|
+              #these comments have to go to external_ticket
+              #issue.add_comment( 
+            }
+          end
+        end
         
         x=eval("fubar")
 
@@ -122,6 +142,36 @@ module TicGitNG
       end
       
       def destroy
+      end
+
+      def format_ticket_4_github ticket
+        output_string="\n"
+        never_export=
+          #These items should never need to be updated via '#' comments on Github
+          [:user, :title, :body, :state, :label, :comments, :repository, :updated_at, :votes]
+          #:user won't need to be updated because we have the :created_by tag
+          #:title, :body, :state, :label, and comments all have their own update mechanisms
+          #:repository is just superfluous information
+        ticket.get_attribute.map {|ticket_attr|
+          next if never_export.include?(ticket_attr[0])
+          #Don't forget to not update things like user if it's the same as @options[:username]
+          #and any other conditional items that would otherwise go in never_export
+          next if (ticket_attr[0]==:user and ticket_attr[1]==@options[:username])
+
+          output_string << "\n#{ticket_attr[0]}=#{ticket_attr[1]}"
+        }
+        output_string
+      end
+
+      def format_comment_4_github comment
+        output_string="\n"
+        never_export=[]
+        comment.each {|key,value|
+          next if never_export.include?(key)
+          next if (key==:comment_updated_on and value==comment[:comment_created_on]) 
+          output_string << "\n#{key}=#{value}"
+        }
+        output_string
       end
 
       private
