@@ -26,6 +26,14 @@ module TicGitNG
             attribute=attribute.to_s unless attrs.has_key?(attribute)
             attrs[attribute].each {|comment|
               value.each_key {|comment_value|
+
+                #:comment__id is hint that we need to look for an ID tag, but not necessarily one that is named comment__id
+                #or one that uses a name that we can completely predict ahead of time. So, we look for any ticket matching this regex.
+                if comment_value==:comment__id
+                  return false unless comment.map {|k_v| !k_v[0].to_s[/^comment_.*_id$/].nil?}.include?(true)
+                  next
+                end
+
                 return false unless (comment.has_key?(comment_value) or comment.has_key?(comment_value.to_s))
               }
             }
@@ -50,7 +58,8 @@ module TicGitNG
       :comments=>{
         :comment_created_on=>:depends_on_comments,
         :comment_author=>:depends_on_comments,
-        :comment_body=>:depends_on_comments
+        :comment_body=>:depends_on_comments,
+        :comment__id=>:depends_on_comments
         }
       }
     end
