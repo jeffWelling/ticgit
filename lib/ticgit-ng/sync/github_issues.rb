@@ -190,6 +190,18 @@ module TicGitNG
         output_string
       end
 
+      def comment_revision comment, repo, ticket_num
+        output_string="#The comment at\n#https://github.com/#{get_username(repo)}/#{get_repo_name(repo)}/issues/#{ticket_num}#issuecomment-#{comment[:comment_github_issues_id]}\n#was updated.\n"
+        never_export=
+          [:comment_github_issues,:comment_created_on,:comment_author_gravatar_id,:comment_author]
+        comment.each {|k_v|
+          unless never_export.include?(k_v[0])
+            output_string << "##{k_v[0]}=#{k_v[1]}\n"
+          end
+        }
+        output_string
+      end
+
       private
 
       def get_username source
