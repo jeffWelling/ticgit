@@ -302,6 +302,7 @@ module TicGitNG
 
       bs = git.lib.branches_all.map{|b| b.first }
 
+      #FIXME Whatsis? Why the duplication?
       unless (bs.include?(which_branch?) || bs.include?(which_branch?))  &&
               File.directory?(@tic_working)
         init_ticgitng_branch(bs.include?(which_branch?))
