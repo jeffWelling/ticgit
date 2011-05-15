@@ -217,7 +217,7 @@ module TicGitNG
               :comment_author             =>comment.user,
               :comment_created_on         =>comment.created_at,
               :comment_author_gravatar_id =>comment.gravatar_id,
-              :comment_github_id          =>comment.id,
+              :comment_github_issues_id   =>comment.id,
               :comment_updated_on         =>comment.updated_at}
             }
         }
