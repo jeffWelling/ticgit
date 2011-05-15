@@ -111,13 +111,24 @@ module TicGitNG
         end
 
         #check comments
+        #FIXME This looks ugly and I have a sneaking suspicion the efficiency achieved can be improved on
         comments_to_add= ticket.comments.collect {|comment| external_ticket.comments.map {|external_comment|
-          external_comment[:comment_id]==comment[:comment_id]}.compact.include?(true) ? nil : comment }.compact
-        #comments_to_update=
+          external_comment[:comment_github_issues_id]==comment[:comment_github_issues_id]
+        }.compact.include?(true) ? nil : comment }.compact
+        
+        comments_to_update= ticket.comments.collect {|comment| external_ticket.comments.map {|ext_comment|
+          (external_comment[:comment_github_issues_id]==comment[:comment_github_id] and external_comment!=comment)
+        }.compact.include?(true) ? nil : comment }.compact
 
-        #sort chronologically
+        id_to_comment={}
+        ticket.comments.each {|comment| id_to_comment.merge!({ comment.comment_github_issues_id => [comment] }) }
+        external_ticket.comments.each {|comment| id_to_comment.merge(
+          { comment.comment_github_issues_id => [ comment , id_to_comment[comment.comment_github_issues_id ].flatten] })}
+
         #we cant actually go back in time and post the comment to Github at the right time to get the correct
-        #created
+        #created on date on the remote bug tracker, but the least we can do is perform each update in the order
+        #they were performed offsite. Eg, lets not do it the ugly way - post all new comments and then the
+        #updates, but instead lets do each update in chronological order
         m={}
         comments_to_add.each {|comment|
           m.merge!({ comment[:comment_created_on]=>[:add, comment] })
@@ -131,12 +142,14 @@ module TicGitNG
           issue=Issue.find(:user=>get_username(repo),:repo=>get_repo(repo),:number=>ticket.github_id)
 
           m.each {|item|
+            #item == [Time.now, [:action, ticket_comment]]
             case item[1][0]
             when :add
               #add the comment in item[1][1]
-              issue.add_comment(
+              issue.add_comment( comment.comment_body << format_comment_4_github(comment) )
             when :update
               #update with the comment in item[1][1]
+              issue.add_comment( comment_revision(comment, repo, ticket.comment_github_issues_id) )
             end
           }
 
