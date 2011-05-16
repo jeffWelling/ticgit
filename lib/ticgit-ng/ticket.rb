@@ -88,6 +88,11 @@ module TicGitNG
 
         Dir.mkdir(ticket_name)
         Dir.chdir(ticket_name) do
+          #ticket_name is in the format of
+          # "#{Time.now.to_i}_#{cleaned(ticket_name)_#{rand(999)}"
+          # So, the ticket ID is based on the time the ticket was created,
+          #the title of the ticket when it was created, and a random number,
+          #presumably for uniqueness.
           base.new_file('TICKET_ID', ticket_name)
           base.new_file('TICKET_TITLE', title)
           base.new_file('ASSIGNED_' + email, email)
