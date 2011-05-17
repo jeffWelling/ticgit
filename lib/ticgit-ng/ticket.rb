@@ -167,8 +167,8 @@ module TicGitNG
 
       base.in_branch do |wd|
         Dir.chdir(ticket_name) do
-          base.git.remove( 'TITLE' )
-          base.git.new_file( 'TITLE', new_title)
+          base.git.remove(File.join(ticket_name, 'TITLE') )
+          base.new_file( 'TITLE', new_title)
           base.git.add
           base.git.commit("changed title to #{new_title}")
         end
