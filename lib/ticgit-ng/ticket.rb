@@ -171,7 +171,7 @@ module TicGitNG
           base.new_file( 'TITLE', new_title)
         end
         base.git.add
-        base.git.commit("changed title to #{new_title}")
+        base.git.commit("changed title to #{new_title} on ticket #{ticket_name}")
       end
     end
 
