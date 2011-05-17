@@ -251,6 +251,14 @@ module TicGitNG
       end
     end
 
+    def ticket_title(new_title, ticket_id=nil)
+      if t=ticket_revparse(ticket_id)
+        ticket= TicGitNG::Ticket.open(self, t, tickets[t])
+        ticket.change_title(new_title)
+        reset_ticgitng
+      end
+    end
+
     def ticket_points(new_points = nil, ticket_id = nil)
       if t = ticket_revparse(ticket_id)
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
