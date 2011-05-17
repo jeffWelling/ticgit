@@ -29,8 +29,10 @@ Required Ruby Gems: git
 
 To install these packages on a Debian system, or a Debian based system like Ubuntu, do
 
-    sudo aptitude install git ruby rubygems
+    sudo apt-get install git ruby rubygems
     sudo gem install git
+
+If you are installing rubygems for the first time or are troubleshooting, please see the note about installing rubygems below.
 
 **ticgitweb**
 
@@ -40,13 +42,19 @@ Required Ruby Gems: git, sinatra, haml, sass
 
 To install these packages on a Debian system, or a Debian based system like Ubuntu, do
 
-    sudo aptitude install git ruby rubygems
-    sudo gem install git sinatra haml sass
+    sudo apt-get install git ruby rubygems
+    sudo gem install git sinatra haml
+    sudo gem install sass --pre  
 
+If you are installing rubygems for the first time or are troubleshooting, please see the note about installing rubygems below.  
 
+**A Note about installing rubygems**
 
+After installing rubygems it is necessary to update the PATH environment variable so that the scripts can be found. Add the following line to the end of your .bachrc file or equivalent.  This is also relevent if you are getting errors about "the program is not installed" even though you just installed it.  The reason this is required is because rubygems does not add the gems bin path to $PATH.
 
-**A Note about rubygems**
+    PATH=$PATH:/var/lib/gems/1.8/bin
+
+**A Note about rubygems on Debian Version < 6.0**
 
 While the version of rubygems available from the repositories on Debian 5.0.5 stable will work just fine for using the command line `ti` program, using `ticgitweb` requires some extra effort.
 Older versions of rubygems, such as the one available on Debian 5.0.5, will not work out of the box with the new gem repositories because the .deb in stable relies on rubyforge rather than rubygems for its operations. See [this bug](http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=558251) for an example. If you are running an older version of rubygems, you may need to get the latest rubygems package from http://rubygems.org/ or [apt](http://jaqque.sbih.org/kplug/apt-pinning.html) [pinning](http://jeffwelling.github.com//2010/09/05/Apt-Pinning.html) before being able to properly install the git and ticgit gems.
@@ -60,19 +68,16 @@ The git gem requires a git version of 1.6.0.0 or later, but on Debian stable, gi
 
 If these annoy you as they do me and you've set up [apt](http://jaqque.sbih.org/kplug/apt-pinning.html) [pinning](http://jeffwelling.github.com//2010/09/05/Apt-Pinning.html), you can do
 
-    $ sudo aptitude -t testing install git-core
+    sudo apt-get -t testing install git-core
 
 And those notices should go away.
-
-
-
 
 ### Installing ##
 Installation on a Debian stable system.  Note that the command line interface for TicGit-ng can be run from Debian stable, but some of the gems required for the web interface may require you to use [apt](http://jaqque.sbih.org/kplug/apt-pinning.html) [pinning](http://jeffwelling.github.com//2010/09/05/Apt-Pinning.html) to run without errors.  See below
 
 To install TicGit-ng on your system, you can go one of two ways,
 
-    $ gem install TicGit-ng
+    $ sudo gem install TicGit-ng
 
 or, you can install it from source by downloading this repository building your own gem (see below).
 
@@ -98,6 +103,7 @@ To get a list of all commands with short description:
         new                              Create a new ticket
         attach                           Attach file to ticket
         list                             List tickets
+        sync                           Sync tickets
      
     Common options:
         -v, --version                    Show the version number
@@ -131,6 +137,7 @@ The available commands are:
     ti comment  - add a comment to a ticket
     ti tag      - add or delete a tag from a ticket
     ti assign   - change to whom a ticket is assigned
+    ti sync     -  sync tickets with a remote repo
 
 
 ### Usage Examples ###
@@ -157,6 +164,7 @@ If you run it without arguments, it will tell you what is available to run
         new                              Create a new ticket
         attach                           Attach file to ticket
         list                             List tickets
+        sync                           Sync tickets
      
     Common options:
         -v, --version                    Show the version number
@@ -338,23 +346,23 @@ The process is much the same as above, except the rolls are reversed.  Once you 
 Replacing SOURCE_URL with the URL you were told to pull from, now you can see the changes they made, in your ticgit-ng branch.  You can easily publish these changes with a `git push origin` so anyone following your work can also see these changes.
 
 
-### Next generation collaboration ###
+### Next Generation collaboration ###
 
 Changes made by [Bruno Santos](http://github.com/pheres) to add a [`ti sync`](http://github.com/jeffWelling/ticgit/commit/7388386fab4fb12c36e6eeb7d19eaa4e4b16b853) command were integrated on February 15th 2011.  You can now use the `ti sync [options]` command to sync your tickets with anyone else you've added with `git remote add`.  To use `ti sync`, all you need to do is first make sure you've already added the remote source with `git remote add`, and then do
 
     $ ti sync --repo REMOTE_SOURCE
 
-if you want to pull their tickets into your ticgit-ng branch *and* push your tickets to their ticgit-ng branch, or
+if you want to pull their tickets into your ticgit-ng branch *and* push your tickets to their ticgit-ng branch, otherwise use
 
     $ ti sync --repo REMOTE_SOURCE --no-push
 
-if you want to pull their tickets into your ticgit-ng branch without pushing your tickets to their branch.
+if you want to pull their tickets into your ticgit-ng branch *without* pushing your tickets to their branch.
 
 More information on using ti sync can be gleemed from reviewing the [merge specs](https://github.com/jeffWelling/ticgit/blob/deving/spec/merging_spec.rb)
 
 ### Ticgitweb ###
 
-To run the Sinatra enabled web UI for your TicGit-ng repo, simply cd to your repository and run 'ticgitweb', or 'ticgitweb -p 3456' to change the port to something other than '4567', which is the Sinatra default.
+To run the Sinatra enabled web UI for your TicGit-ng repo, simply `cd` to your repository and run 'ticgitweb', or 'ticgitweb -p 3456' to change the port to something other than '4567', which is the Sinatra default.
 
 Here is what the Ticket listing looks like:
 
@@ -367,14 +375,16 @@ And here is an individual ticket:
 
 ## Development ##
 
-The original author had used rspec to write specs for ticgit-ng, but one of the maintainers since then switched it over to bacon[[1](http://www.ruby-forum.com/topic/137928)][[2](http://www.ruby-forum.com/topic/172139)][[3](http://testanything.org/wiki/index.php/Testing_with_Ruby)] and I haven't been too inclined to switch it back.
+TicGit-ng uses rspec, tests are located in the spec/ directory.
+
+More information on the current development of TicGit-ng can be found [here](https://github.com/jeffWelling/ticgit/wiki/Development).
 
 ### Prerequisites ###
 
 To install the prerequisites on Debian stable for testing ticgit-ng, you will need [apt](http://jaqque.sbih.org/kplug/apt-pinning.html) [pinning](http://jeffwelling.github.com//2010/09/05/Apt-Pinning.html).
 
     $ sudo aptitude -t testing install rubygems rake
-    $ sudo gem install yard bacon
+    $ sudo gem install yard
 
 I pull rubygems from testing to avoid a problem with gherkin creating a syntactically incorrect gemspec which makes a lot of noise whenever `gem` is called. I ran into a problem when gem was installing yard, it had a problem with the documentation but thankfully the error wasn't fatal and was only about not being able to compile the documentation which I don't use, so it continued without trouble.
 
@@ -383,25 +393,21 @@ I pull rubygems from testing to avoid a problem with gherkin creating a syntacti
 
 To test your version of ticgit-ng, go to your ticgit-ng directory and run
 
-    rake bacon
+    rspec spec/*_spec.rb
 
 ### How to generate a gem from your development copy of ticgit-ng ###
 
 To create a gem from your development copy of ticgit-ng, go to your ticgit-ng directory and do
 
-    rake gem
+    gem build ticgit-ng.gemspec
 
-This will create a pkg/ directory, which will contain a newly created ticgit-ng gem for you to install.
-
-More information on developing TicGit-ng and collaborating with other TicGit-ng developers at [here](https://github.com/jeffWelling/ticgit/wiki/Development)
+This will create a TicGit-ng-VERSION.gem file for you to install.
 
 More information on developing TicGit-ng and collaborating with other TicGit-ng developers at [here](https://github.com/jeffWelling/ticgit/wiki/Development)
 
-### Alternatives ###
+### Alternatives ### 
 
-ditz 
-bugs everywhere
-git-issues
+[Alternatives wiki page](https://github.com/jeffWelling/ticgit/wiki/Alternatives)
 
 
 ## Authors ##

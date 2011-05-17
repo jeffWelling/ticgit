@@ -25,7 +25,7 @@ Please specify at least one action to execute.
 Usage: ti COMMAND [FLAGS] [ARGS]
 
 The available ticgit commands are:
-    assign                           Assings a ticket to someone
+    assign                           Assigns a ticket to someone
     attach                           Attach file to ticket
     checkout                         Checkout a ticket
     comment                          Comment on a ticket

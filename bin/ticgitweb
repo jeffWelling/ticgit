@@ -13,7 +13,7 @@
 # which is important when testing multiple branches of development.
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 
-%w(rubygems sinatra git ticgit haml sass).each do |dependency|
+%w(rubygems sinatra git ticgit-ng haml sass).each do |dependency|
   begin
     require dependency
   rescue LoadError => e
@@ -21,10 +21,14 @@ $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
   end
 end
 
+#This line is required to resolve this issue
+#https://github.com/jeffWelling/ticgit/issues/22
+enable :run
+
 # !! TODO : if ARGV[1] is a path to a git repo, use that
 # otherwise, look in ~/.ticgit
 
-$ticgit = TicGit.open('.')
+$ticgit = TicGitNG.open('.')
 
 get('/_stylesheet.css') { Sass::Engine.new(File.read(__FILE__).gsub(/.*__END__/m, '')).render }
 

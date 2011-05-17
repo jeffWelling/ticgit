@@ -88,6 +88,11 @@ module TicGitNG
 
         Dir.mkdir(ticket_name)
         Dir.chdir(ticket_name) do
+          #ticket_name is in the format of
+          # "#{Time.now.to_i}_#{cleaned(ticket_name)_#{rand(999)}"
+          # So, the ticket ID is based on the time the ticket was created,
+          #the title of the ticket when it was created, and a random number,
+          #presumably for uniqueness.
           base.new_file('TICKET_ID', ticket_name)
           base.new_file('TICKET_TITLE', title)
           base.new_file('ASSIGNED_' + email, email)
@@ -160,6 +165,21 @@ module TicGitNG
         base.git.commit("assigned #{new_assigned} to ticket #{ticket_name}")
       end
     end
+
+    def change_title(new_title)
+      return false unless new_title.class==String
+      return false if new_title==title
+
+      base.in_branch do |wd|
+        base.git.remove(File.join(ticket_name, 'TITLE') )
+        Dir.chdir(ticket_name) do
+          base.new_file( 'TITLE', new_title)
+        end
+        base.git.add
+        base.git.commit("changed title to \"#{new_title}\" on ticket #{ticket_name}")
+      end
+    end
+
 
     def change_points(new_points)
       return false if new_points == points
