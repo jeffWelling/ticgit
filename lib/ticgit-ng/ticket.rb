@@ -161,6 +161,21 @@ module TicGitNG
       end
     end
 
+    def change_title(new_title)
+      return false unless new_title.class==String
+      return false if new_title==title
+
+      base.in_branch do |wd|
+        Dir.chdir(ticket_name) do
+          base.git.remove( 'TITLE' )
+          base.git.new_file( 'TITLE', new_title)
+          base.git.add
+          base.git.commit("changed title to #{new_title}")
+        end
+      end
+    end
+
+
     def change_points(new_points)
       return false if new_points == points
 

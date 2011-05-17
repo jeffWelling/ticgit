@@ -21,6 +21,7 @@ module TicGitNG
     register 'Show', 'Show a ticket', 'show'
     register 'State', 'Change state of a ticket', 'state'
     register 'Tag', 'Modify tags of a ticket', 'tag'
+    register 'Title', 'Modify the title of a ticket', 'title'
     register 'Sync', 'Sync tickets', 'sync'
 
     def self.get(command)
