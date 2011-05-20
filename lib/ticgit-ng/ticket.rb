@@ -166,6 +166,10 @@ module TicGitNG
       end
     end
 
+    def change_comment(replacement_msg, comment_filename, override)
+      
+    end
+
     def change_title(new_title)
       return false unless new_title.class==String
       return false if new_title==title

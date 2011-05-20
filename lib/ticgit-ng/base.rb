@@ -90,9 +90,11 @@ module TicGitNG
     end
     
     # returns new Ticket
-    def ticket_recomment(message, comment_id=nil)
-      if t = comment_revparse(comment_id)
+    def ticket_recomment(message, ticket_id=nil, comment_id=nil, override=nil)
+      if t = ticket_revparse(ticket_id)
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
+        ticket.change_comment(comment, comment_revparse(comment_id), override )
+        reset_ticgitng
       end
     end
 
@@ -232,14 +234,25 @@ module TicGitNG
     end
 
     #returns comment name, such as
-    #"1286188321_-ti-tag-fails-hard-without-a-supplied-argument_928"
+    #"COMMENT_1286074795_jeff.welling@gmail.com"
     def comment_revparse comment_id
-      regex= /^#{Regexp.escape(comment_id)}/
-      ch= tickets.select {|name, t| 
-        t['files'].select {|fname, sha| fname[/COMMENT/] }.each {|fname, sha|
-          return fname if (Digest::SHA1.new.update(fname).hexdigest =~ regex)
+      #FIXME Efficiency can be improved, shouldn't have to search every ticket.
+      if comment_id.nil?
+        items={}
+        tickets.select {|name, t|
+          t['files'].select {|fname, sha| fname[/COMMENT/] }.each {|fname, sha|
+            items.merge!({ Time.at( fname.split('_')[1].to_i )  =>  fname  })
+          }
         }
-      }
+        return items.sort.reverse[0][1]
+      else
+        regex= /^#{Regexp.escape(comment_id)}/
+        tickets.select {|name, t| 
+          t['files'].select {|fname, sha| fname[/COMMENT/] }.each {|fname, sha|
+            return fname if (Digest::SHA1.new.update(fname).hexdigest =~ regex)
+          }
+        }
+      end
     end
 
     def ticket_tag(tag, ticket_id = nil, options = OpenStruct.new)

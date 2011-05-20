@@ -28,7 +28,7 @@ module TicGitNG
         return unless message= (options.messsage || get_editor_message)
         tic.ticket_checkout(options.ticket) if options.ticket
 
-        tic.ticket_recomment( message, options.comment )
+        tic.ticket_recomment( message, options.ticket, options.comment, options.override )
       end
     end
   end
