@@ -19,7 +19,7 @@ module TicGitNG
         #There is no ID appended to the filename, this comment was likely created with an
         #old version of TicGit
         #Determine comment_id from filename
-        @comment_id= sha1(file_name)
+        @comment_id=Digest::SHA1.new.update(file_name).hexdigest
       end
 
       type, date, user = file_name.split('_')
@@ -27,11 +27,6 @@ module TicGitNG
       @added = Time.at(date.to_i)
       @user = user
 
-    end
-
-    def sha1 string
-      raise "sha1(string): string must be a String" unless string.class==String
-      Digest::SHA1.new.update(string).hexdigest
     end
   end
 end

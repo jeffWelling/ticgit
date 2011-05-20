@@ -101,7 +101,8 @@ module TicGitNG
 
           # add initial comment
           #COMMENT_080315060503045__schacon_at_gmail
-          base.new_file(comment_name(email), opts[:comment]) if opts[:comment]
+          comment_name=comment_name(email)
+          base.new_file(comment_name, opts[:comment] + "\n#ID=#{Digest::SHA1.new.update(comment_name).hexdigest}") if opts[:comment]
 
           # add initial tags
           if opts[:tags] && opts[:tags].size > 0
