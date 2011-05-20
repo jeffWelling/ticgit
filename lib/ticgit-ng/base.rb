@@ -209,6 +209,9 @@ module TicGitNG
       end
     end
 
+
+    #Returns ticket name, such as
+    #"1305615195_make-ticgit-faster_425"
     def ticket_revparse(ticket_id)
       if ticket_id
         ticket_id = ticket_id.strip
