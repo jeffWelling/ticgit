@@ -12,15 +12,7 @@ module TicGitNG
       #and this means the hash of the file changes. If your using said hash as an ID, your comment ID
       #would change whenever the comment changed, and we want a comment ID that is immutable per 
       #comment.
-      if @comment_id=@comment[/#ID=[a-z0-9]{40}$/]
-        #There is a '#ID=...' string at the end of the comment which contains the comment ID
-        @comment_id=@comment_id.gsub('#ID=','')
-      else
-        #There is no ID appended to the filename, this comment was likely created with an
-        #old version of TicGit
-        #Determine comment_id from filename
-        @comment_id=Digest::SHA1.new.update(file_name).hexdigest
-      end
+      @comment_id=Digest::SHA1.new.update(file_name).hexdigest
 
       type, date, user = file_name.split('_')
 
