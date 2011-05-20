@@ -18,6 +18,7 @@ module TicGitNG
     register 'New', 'Create a new ticket', 'new'
     register 'Points', 'Assign points to a ticket', 'points'
     register 'Recent', 'List recent activities', 'recent'
+    register 'Recomment', 'Change an existing comment', 'recomment'
     register 'Show', 'Show a ticket', 'show'
     register 'State', 'Change state of a ticket', 'state'
     register 'Tag', 'Modify tags of a ticket', 'tag'
