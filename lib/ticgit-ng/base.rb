@@ -30,6 +30,7 @@ module TicGitNG
       @state = File.expand_path(File.join(@tic_dir, proj, 'state'))
 
       if File.file?(@state)
+        #populate @last_ticket, @current_ticket
         load_state
       else
         reset_ticgitng
