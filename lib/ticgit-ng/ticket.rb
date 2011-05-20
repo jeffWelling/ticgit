@@ -131,7 +131,8 @@ module TicGitNG
       return false if !comment
       base.in_branch do |wd|
         Dir.chdir(ticket_name) do
-          base.new_file(comment_name(email), comment)
+          comment_name=comment_name(email)
+          base.new_file(comment_name, comment + "\n#ID=#{Digest::SHA1.new.update(comment_name).hexdigest}" )
         end
         base.git.add
         base.git.commit("added comment to ticket #{ticket_name}")
