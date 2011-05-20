@@ -167,7 +167,31 @@ module TicGitNG
     end
 
     def change_comment(replacement_msg, comment_filename, override)
-      
+      if override.class==TrueClass
+        #change comment the comment even though we didn't author it
+        #this could cause problems with bug trackers which don't let
+        #us update comments we didn't author
+        base.in_branch do |wd|
+          base.git.remove(File.join(ticket_name, comment_filename))
+          Dir.chdir(ticket_name) do
+            base.new_file( comment_filename, replacement_msg )
+          end
+          base.git.add
+          base.git.commit("changed comment #{comment_filename}")
+        end
+      else
+        #only change comment if we wrote it
+        if comment_filename.split('_').downcase == options[:user_email].downcase.strip
+          base.in_branch do |wd|
+            base.git.remove(File.join(ticket_name, comment_filename))
+            Dir.chdir(ticket_name) do
+              base.new_file( comment_filename, replacement_msg )
+            end
+            base.git.add
+            base.git.commit("changed comment #{comment_filename}")
+          end
+        end
+      end
     end
 
     def change_title(new_title)
