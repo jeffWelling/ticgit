@@ -228,6 +228,17 @@ module TicGitNG
       end
     end
 
+    #returns comment name, such as
+    #"1286188321_-ti-tag-fails-hard-without-a-supplied-argument_928"
+    def comment_revparse comment_id
+      regex= /^#{Regexp.escape(comment_id)}/
+      ch= tickets.select {|name, t| 
+        t['files'].select {|fname, sha| fname[/COMMENT/] }.each {|fname, sha|
+          return fname if (Digest::SHA1.new.update(fname).hexdigest =~ regex)
+        }
+      }
+    end
+
     def ticket_tag(tag, ticket_id = nil, options = OpenStruct.new)
       if t = ticket_revparse(ticket_id)
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
