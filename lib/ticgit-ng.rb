@@ -4,6 +4,7 @@ require 'optparse'
 require 'ostruct'
 require 'set'
 require 'yaml'
+require 'digest/sha1'
 
 # Add the directory containing this file to the start of the load path if it
 # isn't there already.

@@ -116,6 +116,7 @@ module TicGitNG
         puts "Comments (#{t.comments.size}):"
         t.comments.reverse_each do |c|
           puts "  * Added #{c.added.strftime('%m/%d %H:%M')} by #{c.user}"
+          puts "    Comment ID: #{c.comment_id}"
 
           wrapped = c.comment.split("\n").map{|line|
             line.length > 80 ? line.gsub(/(.{1,80})(\s+|$)/, "\\1\n").strip : line
