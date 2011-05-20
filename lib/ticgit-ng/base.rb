@@ -93,7 +93,7 @@ module TicGitNG
     def ticket_recomment(message, ticket_id=nil, comment_id=nil, override=nil)
       if t = ticket_revparse(ticket_id)
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
-        ticket.change_comment(comment, comment_revparse(comment_id), override )
+        ticket.change_comment(message, comment_revparse(comment_id), override )
         reset_ticgitng
       end
     end

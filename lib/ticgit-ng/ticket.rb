@@ -172,20 +172,20 @@ module TicGitNG
         #this could cause problems with bug trackers which don't let
         #us update comments we didn't author
         base.in_branch do |wd|
-          base.git.remove(File.join(ticket_name, comment_filename))
+          base.git.remove(File.join(ticket_name, comment_filename)) rescue nil
           Dir.chdir(ticket_name) do
-            base.new_file( comment_filename, replacement_msg )
+            base.new_file( comment_filename, replacement_msg.to_s + "\n#Updated_at=#{Time.now.to_s}")
           end
           base.git.add
           base.git.commit("changed comment #{comment_filename}")
         end
       else
         #only change comment if we wrote it
-        if comment_filename.split('_').downcase == options[:user_email].downcase.strip
+        if comment_filename.split('_')[2].downcase == opts[:user_email].downcase.strip
           base.in_branch do |wd|
-            base.git.remove(File.join(ticket_name, comment_filename))
+            base.git.remove(File.join(ticket_name, comment_filename)) rescue nil
             Dir.chdir(ticket_name) do
-              base.new_file( comment_filename, replacement_msg )
+              base.new_file( comment_filename, replacement_msg.to_s + "\n#Updated_at=#{Time.now.to_s}" )
             end
             base.git.add
             base.git.commit("changed comment #{comment_filename}")
@@ -199,7 +199,7 @@ module TicGitNG
       return false if new_title==title
 
       base.in_branch do |wd|
-        base.git.remove(File.join(ticket_name, 'TITLE') )
+        base.git.remove(File.join(ticket_name, 'TITLE') ) rescue nil  #the rescue nil helps smooth over any errors caused by the file not existing, likely due to running into a bug in the next line or two
         Dir.chdir(ticket_name) do
           base.new_file( 'TITLE', new_title)
         end
