@@ -88,6 +88,13 @@ module TicGitNG
         reset_ticgitng
       end
     end
+    
+    # returns new Ticket
+    def ticket_recomment(message, comment_id=nil)
+      if t = comment_revparse(comment_id)
+        ticket = TicGitNG::Ticket.open(self, t, tickets[t])
+      end
+    end
 
     # returns array of Tickets
     def ticket_list(options = {})
