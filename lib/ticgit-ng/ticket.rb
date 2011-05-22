@@ -166,12 +166,46 @@ module TicGitNG
       end
     end
 
+    def change_comment(replacement_msg, comment_filename, override)
+      #append if not appended
+      #this allows syncing to provide the tag before passing the replacemnet message, meaning we can
+      #tag with the *actual* updated at time instead of the time the comment was updated via our sync
+      unless was_updated?(replacement_msg)
+        replacement_msg + "\n#Updated_at=#{Time.now.to_s}"
+      end
+      if override.class==TrueClass
+        #change comment the comment even though we didn't author it
+        #this could cause problems with bug trackers which don't let
+        #us update comments we didn't author
+        base.in_branch do |wd|
+          base.git.remove(File.join(ticket_name, comment_filename)) rescue nil
+          Dir.chdir(ticket_name) do
+            base.new_file( comment_filename, replacement_msg)
+          end
+          base.git.add
+          base.git.commit("changed comment #{comment_filename}")
+        end
+      else
+        #only change comment if we wrote it
+        if comment_filename.split('_')[2].downcase == opts[:user_email].downcase.strip
+          base.in_branch do |wd|
+            base.git.remove(File.join(ticket_name, comment_filename)) rescue nil
+            Dir.chdir(ticket_name) do
+              base.new_file( comment_filename, replacement_msg)
+            end
+            base.git.add
+            base.git.commit("changed comment #{comment_filename}")
+          end
+        end
+      end
+    end
+
     def change_title(new_title)
       return false unless new_title.class==String
       return false if new_title==title
 
       base.in_branch do |wd|
-        base.git.remove(File.join(ticket_name, 'TITLE') )
+        base.git.remove(File.join(ticket_name, 'TITLE') ) rescue nil  #the rescue nil helps smooth over any errors caused by the file not existing, likely due to running into a bug in the next line or two
         Dir.chdir(ticket_name) do
           base.new_file( 'TITLE', new_title)
         end
@@ -254,6 +288,12 @@ module TicGitNG
       [Time.now.to_i.to_s, Ticket.clean_string(title), rand(999).to_i.to_s].join('_')
     end
 
-
+    #return true if comment_msg contains \n#Updated_at=#{Time.now.to_s}  tag
+    def was_updated? comment_msg
+      tag=comment_msg.split("\n").reverse[0][/\#Updated_at=[^=](.{1,8}\s){4}\d{4}$/] rescue (return false)
+      #DateTime can parse Time.now.to_s strings, so if tag is parsable then the tag is valid
+      DateTime.parse tag.gsub("#Updated_at=",'') rescue (return false)
+      true
+    end
   end
 end
