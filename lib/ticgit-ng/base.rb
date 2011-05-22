@@ -88,6 +88,15 @@ module TicGitNG
         reset_ticgitng
       end
     end
+    
+    # returns new Ticket
+    def ticket_recomment(message, ticket_id=nil, comment_id=nil, override=nil)
+      if t = ticket_revparse(ticket_id)
+        ticket = TicGitNG::Ticket.open(self, t, tickets[t])
+        ticket.change_comment(message, comment_revparse(comment_id), override )
+        reset_ticgitng
+      end
+    end
 
     # returns array of Tickets
     def ticket_list(options = {})
@@ -202,6 +211,9 @@ module TicGitNG
       end
     end
 
+
+    #Returns ticket name, such as
+    #"1305615195_make-ticgit-faster_425"
     def ticket_revparse(ticket_id)
       if ticket_id
         ticket_id = ticket_id.strip
@@ -218,6 +230,28 @@ module TicGitNG
         end
       elsif(@current_ticket)
         return @current_ticket
+      end
+    end
+
+    #returns comment name, such as
+    #"COMMENT_1286074795_jeff.welling@gmail.com"
+    def comment_revparse comment_id
+      #FIXME Efficiency can be improved, shouldn't have to search every ticket.
+      if comment_id.nil?
+        items={}
+        tickets.select {|name, t|
+          t['files'].select {|fname, sha| fname[/COMMENT/] }.each {|fname, sha|
+            items.merge!({ Time.at( fname.split('_')[1].to_i )  =>  fname  })
+          }
+        }
+        return items.sort.reverse[0][1]
+      else
+        regex= /^#{Regexp.escape(comment_id)}/
+        tickets.select {|name, t| 
+          t['files'].select {|fname, sha| fname[/COMMENT/] }.each {|fname, sha|
+            return fname if (Digest::SHA1.new.update(fname).hexdigest =~ regex)
+          }
+        }
       end
     end
 
