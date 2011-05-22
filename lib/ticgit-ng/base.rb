@@ -207,10 +207,8 @@ module TicGitNG
       if ticket_id
         ticket_id = ticket_id.strip
 
-        if /^[0-9]*$/ =~ ticket_id
-          if t = @last_tickets[ticket_id.to_i - 1]
-           return t
-          end
+        if /^[0-9]*$/ =~ ticket_id && (t = @last_tickets[ticket_id.to_i - 1])
+          return t
         else # partial or full sha
           regex = /^#{Regexp.escape(ticket_id)}/
           ch = tickets.select{|name, t|
