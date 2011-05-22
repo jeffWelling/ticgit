@@ -118,7 +118,7 @@ module TicGitNG
           puts "  * Added #{c.added.strftime('%m/%d %H:%M')} by #{c.user}"
           puts "    Comment ID: #{c.comment_id}"
 
-          wrapped = c.comment.split("\n").map{|line|
+          wrapped = c.comment.gsub(/\#Updated_at=[^=](.{1,8}\s){4}\d{4}$/,'').split("\n").map{|line|
             line.length > 80 ? line.gsub(/(.{1,80})(\s+|$)/, "\\1\n").strip : line
           }.join("\n")
 
