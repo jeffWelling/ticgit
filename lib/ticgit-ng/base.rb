@@ -209,7 +209,7 @@ module TicGitNG
 
         if /^[0-9]*$/ =~ ticket_id && (t = @last_tickets[ticket_id.to_i - 1])
           return t
-        else # partial or full sha
+        elsif ticket_id.length > 4 # partial (5 characters or greater to be considered unique enough) or full sha
           regex = /^#{Regexp.escape(ticket_id)}/
           ch = tickets.select{|name, t|
             t['files'].assoc('TICKET_ID')[1] =~ regex }

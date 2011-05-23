@@ -50,7 +50,7 @@ describe TicGitNG::Base do
         "1306092232_#{clean_name}_317" =>
           {
             "files"=> [
-                ["ASSIGNED_dale.fukami@gmail.com", "2d4e94d6963e02f079bc5712ed90a8237a415ebf"],
+                ["ASSIGNED_some_person@email.com", "2d4e94d6963e02f079bc5712ed90a8237a415ebf"],
                 ["STATE_open", "f510327578a4562e26a7c64bdf061e4a49f85ee6"],
                 ["TICKET_ID", integer_partial_sha+'ajf34j2lk23bk3423'],
                 ["TICKET_TITLE", "44c496d5543823f54e7920738b70b03e85955866"],
@@ -71,6 +71,13 @@ describe TicGitNG::Base do
     found_tic_name = @ticgitng.ticket_revparse(tic.ticket_id[0..5])
     clean_name = test_title.downcase.gsub(/[^a-z0-9]+/i, '-')
     found_tic_name.should match /^\d+_#{clean_name}_\d+$/
+  end
+
+  it "should not return a ticket by short partial SHA" do
+    tic = @ticgitng.ticket_new("My short partial SHA test ticket")
+
+    found_tic_name = @ticgitng.ticket_revparse( tic.ticket_id[0..3] )
+    found_tic_name.should == nil
   end
 
 end
