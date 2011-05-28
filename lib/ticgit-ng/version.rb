@@ -1,3 +1,3 @@
 module TicGitNG
-  VERSION = '1.0.2.5'
+  VERSION = '1.0.2.6'
 end
