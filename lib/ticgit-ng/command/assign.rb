@@ -36,7 +36,7 @@ module TicGitNG
             tic_id=options.checkout
           end
         end
-        tic.ticket_assign((options.user rescue nil), tic_id)
+        tic.ticket_assign(options.user, tic_id)
       end
     end
   end

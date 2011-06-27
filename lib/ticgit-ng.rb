@@ -43,7 +43,10 @@ module TicGitNG
   autoload :Sync, 'ticgit-ng/sync'
 
   # options
-  #   :logger => Logger.new(STDOUT)
+  #   :logger            => Logger.new(STDOUT)
+  #   :tic_dir           => "~/.#{ which_branch?() }"
+  #   :working_directory => File.expand_path(File.join(@tic_dir, proj, 'working'))
+  #   :index_file        => File.expand_path(File.join(@tic_dir, proj, 'index'))
   def self.open(git_dir, options = {})
     Base.new(git_dir, options)
   end

@@ -84,6 +84,8 @@ module TicGitNG
     # write this ticket to the git database
     def save_new
       base.in_branch do |wd|
+        files=[]
+        t=nil
         base.logger.info "saving #{ticket_name}"
 
         Dir.mkdir(ticket_name)
@@ -94,14 +96,22 @@ module TicGitNG
           #the title of the ticket when it was created, and a random number,
           #presumably for uniqueness.
           base.new_file('TICKET_ID', ticket_name)
+          files << File.join( ticket_name, 'TICKET_ID' )
           base.new_file('TICKET_TITLE', title)
-          base.new_file('ASSIGNED_' + email, email)
-          base.new_file('STATE_' + state, state)
+          files << File.join( ticket_name, 'TICKET_TITLE' )
+          base.new_file( (t='ASSIGNED_'+email) , email)
+          files << File.join( ticket_name, t )
+          base.new_file( (t='STATE_'+state) , state)
+          files << File.join( ticket_name, t )
           base.new_file('TITLE', title)
+          files << File.join( ticket_name, 'TITLE' )
 
           # add initial comment
           #COMMENT_080315060503045__schacon_at_gmail
-          base.new_file(comment_name(email), opts[:comment]) if opts[:comment]
+          if opts[:comment]
+            base.new_file(t=comment_name(email), opts[:comment])
+            files << File.join( ticket_name, t )
+          end
 
           # add initial tags
           if opts[:tags] && opts[:tags].size > 0
@@ -111,12 +121,15 @@ module TicGitNG
                 tag_filename = 'TAG_' + Ticket.clean_string(tag)
                 if !File.exists?(tag_filename)
                   base.new_file(tag_filename, tag_filename)
+                  files << File.join( ticket_name, tag_filename )
                 end
               end
             end
           end
         end
-        base.git.add
+        files.each {|file|
+          base.git.add file
+        }
         base.git.commit("added ticket #{ticket_name}")
       end
       # ticket_id
@@ -129,10 +142,11 @@ module TicGitNG
     def add_comment(comment)
       return false if !comment
       base.in_branch do |wd|
+        t=nil
         Dir.chdir(ticket_name) do
-          base.new_file(comment_name(email), comment)
+          base.new_file(t=comment_name(email), comment)
         end
-        base.git.add
+        base.git.add File.join(ticket_name, t)
         base.git.commit("added comment to ticket #{ticket_name}")
       end
     end
@@ -140,13 +154,14 @@ module TicGitNG
     def change_state(new_state)
       return false if !new_state
       return false if new_state == state
+      t=nil
 
       base.in_branch do |wd|
         Dir.chdir(ticket_name) do
-          base.new_file('STATE_' + new_state, new_state)
+          base.new_file(t='STATE_' + new_state, new_state)
         end
         base.git.remove(File.join(ticket_name,'STATE_' + state))
-        base.git.add
+        base.git.add File.join(ticket_name, t)
         base.git.commit("added state (#{new_state}) to ticket #{ticket_name}")
       end
     end
@@ -157,11 +172,12 @@ module TicGitNG
       return false if new_assigned == old_assigned
 
       base.in_branch do |wd|
+        t=nil
         Dir.chdir(ticket_name) do
-          base.new_file('ASSIGNED_' + new_assigned, new_assigned)
+          base.new_file(t='ASSIGNED_' + new_assigned, new_assigned)
         end
         base.git.remove(File.join(ticket_name,'ASSIGNED_' + old_assigned))
-        base.git.add
+        base.git.add File.join(ticket_name,t)
         base.git.commit("assigned #{new_assigned} to ticket #{ticket_name}")
       end
     end
@@ -222,13 +238,14 @@ module TicGitNG
         Dir.chdir(ticket_name) do
           base.new_file('POINTS', new_points)
         end
-        base.git.add
+        base.git.add File.join(ticket_name, 'POINTS')
         base.git.commit("set points to #{new_points} for ticket #{ticket_name}")
       end
     end
 
     def add_tag(tag)
       return false if !tag
+      files=[]
       added = false
       tags = tag.split(',').map { |t| t.strip }
       base.in_branch do |wd|
@@ -238,13 +255,16 @@ module TicGitNG
               tag_filename = 'TAG_' + Ticket.clean_string(add_tag)
               if !File.exists?(tag_filename)
                 base.new_file(tag_filename, tag_filename)
+                files << File.join( ticket_name, tag_filename )
                 added = true
               end
             end
           end
         end
         if added
-          base.git.add
+          files.each {|file|
+            base.git.add file
+          }
           base.git.commit("added tags (#{tag}) to ticket #{ticket_name}")
         end
       end

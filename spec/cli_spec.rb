@@ -11,6 +11,7 @@ describe TicGitNG::CLI do
 
   after(:all) do
     Dir.glob(File.expand_path("~/.ticgit-ng/-tmp*")).each {|file_name| FileUtils.rm_r(file_name, {:force=>true,:secure=>true}) }
+    Dir.glob(File.expand_path("~/.ticgit/-tmp*")).each {|file_name| FileUtils.rm_r(file_name, {:force=>true,:secure=>true}) }
     Dir.glob(File.expand_path("/tmp/ticgit-ng-*")).each {|file_name| FileUtils.rm_r(file_name, {:force=>true,:secure=>true}) }
   end
 
@@ -36,8 +37,9 @@ The available ticgit commands are:
     recent                           List recent activities
     show                             Show a ticket
     state                            Change state of a ticket
-    tag                              Modify tags of a ticket
     sync                             Sync tickets
+    tag                              Modify tags of a ticket
+    title                            Modify the title of a ticket
 
 Common options:
     -v, --version                    Show the version number

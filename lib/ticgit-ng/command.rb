@@ -42,7 +42,10 @@ module TicGitNG
       o.top.append ' ', nil, nil
       o.top.append 'The available ticgit commands are:', nil, nil
 
-      DOC.each do |commands, doc|
+      sorted_doc = DOC.sort_by do |cmds, doc|
+        cmds.sort_by{|cmd| cmd.size }.last
+      end
+      sorted_doc.each do |commands, doc|
         # get the longest version
         command = commands.sort_by{|cmd| cmd.size }.last
         o.top.append("    %-32s %s" % [command, doc], nil, nil)
