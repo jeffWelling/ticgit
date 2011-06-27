@@ -113,6 +113,9 @@ module TicGitNG
       all_bugs= bugtracker.read
       #sort chronologically
       #merge tickets together
+      # For each attribute(state,title,comments)
+      #   pull attribute
+      #   push attribute
 
 
     end
