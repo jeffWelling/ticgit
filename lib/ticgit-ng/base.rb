@@ -10,14 +10,27 @@ module TicGitNG
 
     def initialize(git_dir, opts = {})
       @git = Git.open(find_repo(git_dir))
-      @logger = opts[:logger] || Logger.new(STDOUT)
-      @last_tickets = []
-
       proj = Ticket.clean_string(@git.dir.path)
 
       @tic_dir = opts[:tic_dir] || "~/.#{which_branch?}"
       @tic_working = opts[:working_directory] || File.expand_path(File.join(@tic_dir, proj, 'working'))
       @tic_index = opts[:index_file] || File.expand_path(File.join(@tic_dir, proj, 'index'))
+
+      @logger = opts[:logger] || Logger.new(STDOUT)
+      @last_tickets = []
+
+      #expire @tic_index and @tic_working if it mtime is older than git log
+      puts "Started"
+      if File.exist?(@tic_working)
+        puts "Inside"
+        cache_mtime=File.mtime(@tic_working)
+        gitlog_mtime=git.gblob(which_branch?).log(1).map {|l| l.committer.date }[0]
+        #unless (cache_mtime > gitlog_mtime.-(20) and cache_mtime <= gitlog_mtime) or (cache_mtime > gitlog_mtime.+(30) and cache_mtime >= gitlog_mtime)
+        if ((cache_mtime.to_i - gitlog_mtime.to_i) > 120) or ((gitlog_mtime.to_i - cache_mtime.to_i) > 120)
+          puts "Resetting cache"
+          reset_cache unless cache_mtime==gitlog_mtime
+        end
+      end
 
       # load config file
       @config_file = File.expand_path(File.join(@tic_dir, proj, 'config.yml'))
@@ -390,7 +403,6 @@ module TicGitNG
         FileUtils.mkdir_p(@tic_working)
         needs_checkout = true
       end
-
       needs_checkout = true unless File.file?('.hold')
 
       old_current = git.lib.branch_current
@@ -420,6 +432,15 @@ module TicGitNG
       end
       #If has ~/.ticgit dir, and 'ticgit' branch
       #If has ~/.ticgit-ng dir, and 'ticgit-ng' branch, and not ~/.ticgit dir and not 'ticgit' branch
+    end
+
+    def reset_cache
+      #@state, @tic_index, @tic_working
+      FileUtils.rm File.expand_path(@state) rescue nil
+      FileUtils.rm File.expand_path(@tic_index) rescue nil
+      FileUtils.rm_r File.expand_path(@tic_working) rescue nil
+      @state=nil
+      FileUtils.mkdir_p File.expand_path(@tic_working)
     end
 
   end
