@@ -20,9 +20,7 @@ module TicGitNG
       @last_tickets = []
 
       #expire @tic_index and @tic_working if it mtime is older than git log
-      puts "Started"
       if File.exist?(@tic_working)
-        puts "Inside"
         cache_mtime=File.mtime(@tic_working)
         gitlog_mtime=git.gblob(which_branch?).log(1).map {|l| l.committer.date }[0]
         #unless (cache_mtime > gitlog_mtime.-(20) and cache_mtime <= gitlog_mtime) or (cache_mtime > gitlog_mtime.+(30) and cache_mtime >= gitlog_mtime)
