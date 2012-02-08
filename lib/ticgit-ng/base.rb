@@ -14,9 +14,13 @@ module TicGitNG
 
       #This is to accomodate for edge-cases where @logger.puts
       #is called from debugging code.
-      unless @logger.respond_to?(:puts)
-        def @logger.puts str
-          self.info str
+      if @logger.respond_to?(:puts) && !@logger.respond_to?(:info)
+        @logger.class.class_eval do
+          alias :info :puts
+        end
+      elsif @logger.respond_to?(:info) && !@logger.respond_to?(:puts)
+        @logger.class.class_eval do
+          alias :puts :info
         end
       end
          
