@@ -273,6 +273,9 @@ a.unknown
     .comment-text
       padding: 10px
       color: #333
+      overflow : auto
+      white-space: pre
+      text-align: left
   
 table.long
   width: 100%
