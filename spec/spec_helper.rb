@@ -31,7 +31,7 @@ tempdir -
   def test_opts
     tempdir = Dir.mktmpdir 'ticgit-ng-ticdir-'
     logger = Logger.new(Tempfile.new('ticgit-ng-log-'))
-    { :tic_dir => tempdir, :logger => logger }
+    { :tic_dir => tempdir, :logger => logger, :init => true }
   end
 
 

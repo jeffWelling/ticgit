@@ -22,12 +22,22 @@ module TicGitNG
     def initialize(args, path = '.', out = $stdout)
       @out = out
       @args = args.dup
-      @tic = TicGitNG.open(path, :keep_state => true)
+
+      #set @init if one of the args is 'init'
+      #this needs to be done because initialization of the ticgit branch must be done before
+      #the branch is loaded, but because of the way commands are modularized this must be done
+      #outside of and before the init.rb file itself is called (init.rb is where we would
+      #normally put the code for such a command).
+      args.include?( 'init' ) ? (@init=true) : (@init=false)
+      #@init= ((args[0][/init/]=='init') rescue false)
+      #@init= ((args[0][/init/]=='init') or (args[1][/init/]=='init') rescue false)
+      
+      @tic = TicGitNG.open(path, {:keep_state => true, :init => @init, :logger  => out })
       @options = OpenStruct.new
 
       @out.sync = true # so that Net::SSH prompts show up
     rescue NoRepoFound
-      puts "No repo found"
+      out.puts "No repo found"
       exit
     end
 
@@ -64,7 +74,13 @@ module TicGitNG
         exit 1
       end
 
-      @action = args.shift
+      #FIXME
+      #this is a dirty hack that needs to be fixed
+      if args.include?('list') and args.include?('init')
+        @action = 'list'
+      else
+        @action = args.shift
+      end
     end
 
     def usage(args = nil)

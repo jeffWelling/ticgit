@@ -86,7 +86,7 @@ module TicGitNG
       base.in_branch do |wd|
         files=[]
         t=nil
-        base.logger.info "saving #{ticket_name}"
+        base.logger.puts "saving #{ticket_name}"
 
         Dir.mkdir(ticket_name)
         Dir.chdir(ticket_name) do

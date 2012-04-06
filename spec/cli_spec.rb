@@ -57,10 +57,10 @@ Common options:
     # It's unclear why it's necessary to append each line like this, but
     # cli('list') would otherwise return nil. The spec helper probably
     # needs some refactoring.
-    cli 'list' do |line|
+    cli('init','list') do |line|
       output << line
     end
-    output.shift.should be_empty
+    output.shift.should match "creating ticgit-ng repo branch"
     output.shift.should match /#{fields.join '\s+'}/
     output.shift.should match /^-+$/
   end

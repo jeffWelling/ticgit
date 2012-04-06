@@ -24,6 +24,7 @@ module TicGitNG
     register 'Tag', 'Modify tags of a ticket', 'tag'
     register 'Title', 'Modify the title of a ticket', 'title'
     register 'Sync', 'Sync tickets', 'sync'
+    register 'Init', 'Initialize Ticgit-ng', 'init'
 
     def self.get(command)
       if mod_name = COMMANDS[command]

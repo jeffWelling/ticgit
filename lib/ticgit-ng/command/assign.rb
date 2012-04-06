@@ -10,7 +10,8 @@ module TicGitNG
     # ti assign -u {name} {1} (assign specified ticket to specified user)
     module Assign
       def parser(opts)
-        opts.banner = "Usage: ti assign [options] [ticket_id]"
+        opts.banner = "Usage: ti assign [options] [ticket_id]\n"+
+                      "Note: to assign to nobody: ti assign -u ''"
         opts.on_head(
           "-u USER", "--user USER", "Assign the ticket to this user"){|v|
           options.user = v
@@ -28,7 +29,7 @@ module TicGitNG
         if ARGV.length == 1  #ti assign
           tic_id=nil
         elsif ARGV.length == 2 #ti assign {ticid}
-          tic_id=ARGV[2]
+          tic_id=ARGV[1]
         elsif ARGV.length == 3 #ti assign -u/-c {user/ticid}
           if options.user
             tic_id=nil

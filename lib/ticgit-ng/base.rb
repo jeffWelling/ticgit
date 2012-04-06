@@ -10,6 +10,23 @@ module TicGitNG
 
     def initialize(git_dir, opts = {})
       @git = Git.open(find_repo(git_dir))
+      @logger = opts[:logger] || Logger.new(STDOUT)
+
+      #This is to accomodate for edge-cases where @logger.puts
+      #is called from debugging code.
+      if @logger.respond_to?(:puts) && !@logger.respond_to?(:info)
+        @logger.class.class_eval do
+          alias :info :puts
+        end
+      elsif @logger.respond_to?(:info) && !@logger.respond_to?(:puts)
+        @logger.class.class_eval do
+          alias :puts :info
+        end
+      end
+         
+      @last_tickets = []
+      @init=opts[:init]
+
       proj = Ticket.clean_string(@git.dir.path)
 
       @tic_dir = opts[:tic_dir] || "~/.#{which_branch?}"
@@ -19,15 +36,23 @@ module TicGitNG
       @logger = opts[:logger] || Logger.new(STDOUT)
       @last_tickets = []
 
-      #expire @tic_index and @tic_working if it mtime is older than git log
+      #expire @tic_index and @tic_working if it mtime is older than 
+      #git log.  Otherwise, during testing, if you use the same temp
+      #directory with the same name, deleting it and recreating it
+      #to test something, ticgit would get confused by the cache from
+      #the previous instance of the temp dir.
       if File.exist?(@tic_working)
         cache_mtime=File.mtime(@tic_working)
-        gitlog_mtime=git.gblob(which_branch?).log(1).map {|l| l.committer.date }[0]
+        (gitlog_mtime=git.gblob(which_branch?).log(1).map {|l| l.committer.date }[0]) rescue reset_cache
+
         #unless (cache_mtime > gitlog_mtime.-(20) and cache_mtime <= gitlog_mtime) or (cache_mtime > gitlog_mtime.+(30) and cache_mtime >= gitlog_mtime)
-        if ((cache_mtime.to_i - gitlog_mtime.to_i) > 120) or ((gitlog_mtime.to_i - cache_mtime.to_i) > 120)
-          puts "Resetting cache"
-          reset_cache unless cache_mtime==gitlog_mtime
+        #FIXME break logic out into several lines
+        #FIXME don't bother resetting if gitlog_mtime.to_i == 0
+        if needs_reset?( cache_mtime, gitlog_mtime ) and !cache_mtime==gitlog_mtime
+          puts "Resetting cache" unless gitlog_mtime.to_i == 0
+          reset_cache
         end
+
       end
 
       # load config file
@@ -357,7 +382,15 @@ module TicGitNG
       #FIXME Whatsis? Why the duplication?
       unless (bs.include?(which_branch?) || bs.include?(which_branch?))  &&
               File.directory?(@tic_working)
-        init_ticgitng_branch(bs.include?(which_branch?))
+        unless @init
+          puts "Please run `ti init` to initialize TicGit-ng for this repository before running other ti commands."
+          exit
+        else
+          puts "Initializing TicGit-ng"
+          init_ticgitng_branch(
+            git.lib.branches_all.map{|b| b.first }.include?(which_branch?)
+          )
+        end
       end
 
       tree = git.lib.full_tree(which_branch?)
@@ -375,7 +408,7 @@ module TicGitNG
     end
 
     def init_ticgitng_branch(ticgitng_branch = false)
-      @logger.info 'creating ticgit-ng repo branch'
+      @logger << 'creating ticgit-ng repo branch'
 
       in_branch(ticgitng_branch) do
         #The .hold file seems to have little to no purpose aside from helping
@@ -434,11 +467,18 @@ module TicGitNG
 
     def reset_cache
       #@state, @tic_index, @tic_working
+      #A rescue is appended to the end of each line because it allows
+      #execution of others to continue upon failure, as opposed to
+      #a begin;rescue;end segment.
+      FileUtils.rm_r File.expand_path(@tic_working) rescue nil
       FileUtils.rm File.expand_path(@state) rescue nil
       FileUtils.rm File.expand_path(@tic_index) rescue nil
-      FileUtils.rm_r File.expand_path(@tic_working) rescue nil
+      FileUtils.mkdir_p File.expand_path(@tic_working) rescue nil
       @state=nil
-      FileUtils.mkdir_p File.expand_path(@tic_working)
+    end
+
+    def needs_reset? cache_mtime, gitlog_mtime
+      ((cache_mtime.to_i - gitlog_mtime.to_i) > 120) or ((gitlog_mtime.to_i - cache_mtime.to_i) > 120)
     end
 
   end
