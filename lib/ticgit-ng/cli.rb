@@ -255,4 +255,8 @@ module TicGitNG
 end
 
 TicGitNG::CLI.reset_window_width
-Signal.trap("SIGWINCH") { TicGitNG::CLI.reset_window_width }
+begin
+    Signal.trap("SIGWINCH") { TicGitNG::CLI.reset_window_width }
+rescue
+    TicGitNG::CLI.use_fallback
+end
