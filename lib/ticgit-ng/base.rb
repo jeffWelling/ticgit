@@ -344,12 +344,6 @@ module TicGitNG
       end
     end
 
-    def comment_add(ticket_id, comment, options = {})
-    end
-
-    def comment_list(ticket_id)
-    end
-
     def tic_states
       ['open', 'resolved', 'invalid', 'hold']
     end
@@ -479,6 +473,12 @@ module TicGitNG
 
     def needs_reset? cache_mtime, gitlog_mtime
       ((cache_mtime.to_i - gitlog_mtime.to_i) > 120) or ((gitlog_mtime.to_i - cache_mtime.to_i) > 120)
+    end
+    
+    def ticket_attach filename, tic_id=nil
+    end
+
+    def ticket_get_attachment file_id, new_filename=nil 
     end
 
   end
