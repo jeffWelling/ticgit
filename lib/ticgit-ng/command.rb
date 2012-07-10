@@ -13,6 +13,7 @@ module TicGitNG
     register 'Attach', 'Attach file to ticket', 'attach'
     register 'Checkout', 'Checkout a ticket', 'checkout', 'co'
     register 'Comment', 'Comment on a ticket', 'comment'
+    register 'Help', 'Show help for a ticgit command', 'help'
     register 'List', 'List tickets', 'list'
     register 'Milestone', 'List and modify milestones', 'milestone'
     register 'New', 'Create a new ticket', 'new'
