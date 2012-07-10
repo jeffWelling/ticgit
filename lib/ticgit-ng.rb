@@ -16,7 +16,7 @@ require 'rubygems'
 require 'git'
 
 #Only redefine if we are not using 1.9
-unless Config::CONFIG["ruby_version"][/^\d\.9/]
+unless (defined?(RbConfig) ? RbConfig : Config)::CONFIG["ruby_version"][/^\d\.9/]
   # FIXME: Monkeypatch git until fixed upstream
   module Git
     class Lib
