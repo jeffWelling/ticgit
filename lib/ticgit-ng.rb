@@ -49,6 +49,7 @@ module TicGitNG
   #   :index_file        => File.expand_path(File.join(@tic_dir, proj, 'index'))
   #   :init              => Boolean -- if true, allow initializing ticgit
   def self.open(git_dir, options = {})
+    puts "TicGitNG.open; #{Time.now.to_f} pre Base.new"
     Base.new(git_dir, options)
   end
 

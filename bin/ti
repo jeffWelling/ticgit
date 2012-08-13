@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
+puts "ti; #{Time.now.to_f} Start"
 require 'rubygems'
 require 'fileutils'
+puts "ti; #{Time.now.to_f} Post-require"
 
 # Add the library from the source tree to the front of the load path.
 # This allows ti to run without first installing a ticgit gem, which is
@@ -9,5 +11,6 @@ if File.exist? File.join('lib', 'ticgit-ng.rb')
     $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 end
 require 'ticgit-ng'
+puts "ti; #{Time.now.to_f} Post-require ticgit-ng, pre execute"
 
 TicGitNG::CLI.execute

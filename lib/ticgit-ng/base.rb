@@ -9,7 +9,9 @@ module TicGitNG
     attr_reader :state, :config_file
 
     def initialize(git_dir, opts = {})
+      puts "Base.new; #{Time.now.to_f} Starting initialization"
       @git = Git.open(find_repo(git_dir))
+      puts "Base.new; #{Time.now.to_f} after Git.open, before git-error check"
 
       begin
         git.lib.full_log_commits 1
@@ -17,6 +19,7 @@ module TicGitNG
         puts "Git error: please check your git repository, you must have at least one commit in git"
         exit 1
       end
+      puts "Base.new; #{Time.now.to_f} post git-error check"
 
       @logger = opts[:logger] || Logger.new(STDOUT)
 
@@ -31,6 +34,7 @@ module TicGitNG
           alias :puts :info
         end
       end
+      puts "Base.new; #{Time.now.to_f} after def"
          
       @last_tickets = []
       @init=opts[:init]
@@ -45,18 +49,22 @@ module TicGitNG
       branch= branches.include?('ticgit-ng') ? ('ticgit-ng') : ('ticgit')
 
       @tic_dir = opts[:tic_dir] ||"~/.#{branch}"
+      puts "Base.new; #{Time.now.to_f} after which_branch?"
       @tic_working = opts[:working_directory] || File.expand_path(File.join(@tic_dir, proj, 'working'))
       @tic_index = opts[:index_file] || File.expand_path(File.join(@tic_dir, proj, 'index'))
 
       @last_tickets = []
 
+      puts "Base.new; #{Time.now.to_f} pre cache check"
       #expire @tic_index and @tic_working if it mtime is older than 
       #git log.  Otherwise, during testing, if you use the same temp
       #directory with the same name, deleting it and recreating it
       #to test something, ticgit would get confused by the cache from
       #the previous instance of the temp dir.
       if File.exist?(@tic_working)
+        puts "Base.new; #{Time.now.to_f} beginning cache check"
         cache_mtime=File.mtime(@tic_working)
+        puts "Base.new; #{Time.now.to_f} got cache_mtime"
         begin
 
 =begin
@@ -70,6 +78,7 @@ module TicGitNG
         rescue
           reset_cache
         end
+        puts "Base.new; #{Time.now.to_f} after cache_mtime and gitlog_mtime get"
 
         #unless (cache_mtime > gitlog_mtime.-(20) and cache_mtime <= gitlog_mtime) or (cache_mtime > gitlog_mtime.+(30) and cache_mtime >= gitlog_mtime)
         #FIXME break logic out into several lines
@@ -78,8 +87,10 @@ module TicGitNG
           puts "Resetting cache" unless gitlog_mtime.to_i == 0
           reset_cache
         end
+        puts "Base.new; #{Time.now.to_f} end of cache check"
 
       end
+      puts "Base.new; #{Time.now.to_f} post cache check"
 
       # load config file
       @config_file = File.expand_path(File.join(@tic_dir, proj, 'config.yml'))
@@ -88,6 +99,7 @@ module TicGitNG
       else
         @config = {}
       end
+      puts "Base.new; #{Time.now.to_f} post YAML.load"
 
       @state = File.expand_path(File.join(@tic_dir, proj, 'state'))
 
@@ -105,12 +117,14 @@ module TicGitNG
           exit
         end
       end
+      puts "Base.new; #{Time.now.to_f} post init-needed? check"
 
       if File.file?(@state)
         load_state
       else
         reset_ticgitng
       end
+      puts "Base.new; #{Time.now.to_f} post init"
     end
 
     def find_repo(dir)
@@ -156,8 +170,11 @@ module TicGitNG
     #This is a legacy function from back when ticgit-ng needed to have its
     #cache reset in order to avoid cache corruption.
     def reset_ticgitng
+      puts "Base-reset_ticgitng; #{Time.now.to_f} pre reset"
       tickets
+      puts "Base-reset_ticgitng; #{Time.now.to_f} mid reset"
       save_state
+      puts "Base-reset_ticgitng; #{Time.now.to_f} post reset"
     end
 
     # returns new Ticket
@@ -172,7 +189,9 @@ module TicGitNG
 
     # returns array of Tickets
     def ticket_list(options = {})
+      puts "Base-ticket_list; #{Time.now.to_f} pre reset_ticgitng"
       reset_ticgitng
+      puts "Base-ticket_list; #{Time.now.to_f} post reset_ticgitng"
       ts = []
       @last_tickets = []
       @config['list_options'] ||= {}
@@ -260,6 +279,7 @@ module TicGitNG
       # :save
 
       save_state
+      puts "Base-ticket_list; #{Time.now.to_f} post ticket_list"
       ts
     end
 

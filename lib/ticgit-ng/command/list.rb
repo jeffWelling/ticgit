@@ -43,6 +43,7 @@ module TicGitNG
       end
 
       def execute
+        puts "list.rb-execute; #{Time.now.to_f} pre execute"
         options.saved = args[0] if args[0]
 
         if tickets = tic.ticket_list(options.to_hash)

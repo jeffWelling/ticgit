@@ -6,13 +6,16 @@ require 'ticgit-ng/command'
 module TicGitNG
   class CLI
     def self.execute
+      puts "CLI.execute; #{Time.now.to_f} Pre parse.execute!"
       parse(ARGV).execute!
     end
 
     def self.parse(args)
+      puts "parse; #{Time.now.to_f} parse"
       #new() calls initialize(...) below
       cli = new(args)
       cli.parse_options!
+      puts "parse; #{Time.now.to_f} end of parse"
       cli
     end
 
@@ -20,6 +23,7 @@ module TicGitNG
     attr_accessor :out
 
     def initialize(args, path = '.', out = $stdout)
+      puts "CLI.new; #{Time.now.to_f} pre init"
       @args = args.dup
 
       #set @init if one of the args is 'init'
@@ -31,10 +35,13 @@ module TicGitNG
       #@init= ((args[0][/init/]=='init') rescue false)
       #@init= ((args[0][/init/]=='init') or (args[1][/init/]=='init') rescue false)
       
+      puts "CLI.new; #{Time.now.to_f} pre TicGitNG.open"
       @tic = TicGitNG.open(path, {:keep_state => true, :init => @init, :logger  => out })
+      puts "CLI.new; #{Time.now.to_f} post TicGitNG.open"
       @options = OpenStruct.new
       @out = out
 
+      puts "CLI.new; #{Time.now.to_f} post init"
       @out.sync = true # so that Net::SSH prompts show up
     rescue NoRepoFound
       out.puts "No repo found"
@@ -42,6 +49,7 @@ module TicGitNG
     end
 
     def execute!
+      puts "execute!; #{Time.now.to_f} pre execute!"
       if mod = Command.get(action)
         extend(mod)
 
@@ -50,6 +58,7 @@ module TicGitNG
         else
           option_parser = Command.parser(action)
         end
+        puts "execute!; #{Time.now.to_f} post module parser call, pre execute"
 
         option_parser.parse!(args)
 
@@ -265,9 +274,11 @@ module TicGitNG
       end
     end
 
+=begin
     def puts(*strings)
       @out.puts(*strings)
     end
+=end
   end
 end
 
