@@ -66,15 +66,7 @@ module TicGitNG
         cache_mtime=File.mtime(@tic_working)
         puts "Base.new; #{Time.now.to_f} got cache_mtime"
         begin
-
-=begin
-            gitlog_mtime= git.gblob(which_branch?).log(1).map {|l| 
-              l.committer.date 
-            }[0]
-=end
-
-            gitlog_mtime= File.mtime(File.join( find_repo('.'), ".git/refs/heads/#{branch}" ))
-
+          gitlog_mtime= File.mtime(File.join( find_repo('.'), ".git/refs/heads/#{branch}" ))
         rescue
           reset_cache
         end
