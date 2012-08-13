@@ -73,6 +73,7 @@ module TicGitNG
               just(t.tags.join(','), 20) ].join(" ")
           end
           puts
+          puts "list.rb-execute; #{Time.now.to_f} post execute"
         end
 
       end
