@@ -15,6 +15,17 @@ describe TicGitNG::Base do
     Dir.glob(File.expand_path("/tmp/ticgit-ng-*")).each {|file_name| FileUtils.rm_r(file_name, {:force=>true,:secure=>true}) }
   end
 
+  it "should fail gracefully when init-ing if git has no commits" do
+    tempdir = Dir.mktmpdir
+    Dir.chdir(tempdir) do
+      git = Git.init
+    end
+    opts=test_opts
+    lambda {
+      TicGitNG.open( tempdir, opts )
+    }.should raise_error SystemExit
+  end
+
   it "should have 4 ticket states" do
     @ticgitng.tic_states.size.should eql(4)
   end
@@ -44,14 +55,6 @@ describe TicGitNG::Base do
     @ticgitng.ticket_change('resolve', tic.ticket_id)
     tic = @ticgitng.ticket_show(tic.ticket_id)
     tic.state.should_not eql('resolve')
-  end
-
-  describe "Testing a ticket" do
-    let(:tic) {  @ticgitng.ticket_list.first }
-
-    it "should get username from git" do
-      tic.opts.should be_a Hash
-    end
   end
 
   it "should be able to change to whom the ticket is assigned" do
@@ -181,6 +184,7 @@ describe TicGitNG::Base do
     t = @ticgitng.ticket_new('my next ticket', :tags => ['scotty', 'chacony'])
     File.lstat(@ticgitng.state).mtime.to_i.should_not eql(time)
   end
+
   it "should be able to change the points of a ticket" do
     @ticgitng.ticket_new('my new ticket')
     tic = @ticgitng.ticket_list.first
@@ -189,5 +193,111 @@ describe TicGitNG::Base do
     tic = @ticgitng.ticket_show(tic.ticket_id)
     tic.points.should == 3
   end
+
+  it "should detect the ticgit branch when the repository is moved" do
+    #create git dir
+      #done in before(:all) block
+    #create some tickets
+    tic=@ticgitng.ticket_new('my new ticket')
+    #move the git dir
+    FileUtils.mv( @path, @path+'1' )
+    #test that the program does not raise SystemExit
+    opts=test_opts
+    opts[:init]=false
+    lambda {
+        @ticgitng=TicGitNG.open( @path+'1', opts )
+    }.should_not raise_error SystemExit
+  end
+
+  it "should use the same email that git provides" do
+    #This is necessary because the other specs depend
+    #on the side effects of one another, but those 
+    #side effects are detrimental to this spec so
+    #we initialize things again for a clean slate.
+    @path = setup_new_git_repo
+    @orig_test_opts = test_opts
+    @ticgitng = TicGitNG.open(@path, @orig_test_opts)
+    tic=@ticgitng.ticket_new('my new ticket')
+    tic.email.should == @ticgitng.git.lib.config_get('user.email')
+  end
+
+  it "should be able to use '_' in assigning" do
+    #This is necessary because the other specs depend
+    #on the side effects of one another, but those
+    #side effects are detrimental to this spec so
+    #we initialize things again for a clean slate.
+    @path = setup_new_git_repo
+    @orig_test_opts = test_opts
+    @ticgitng = TicGitNG.open(@path, @orig_test_opts)
+    tic=@ticgitng.ticket_new('my new ticket')
+    tic=@ticgitng.ticket_assign( 'some_random_user', tic.ticket_id )
+    tic=@ticgitng.ticket_show( tic.ticket_id )
+    tic.assigned.should == 'some_random_user'
+  end
+
+  it "should return an updated ticket for each of the ticket_* methods" do
+    #This is necessary because the other specs depend
+    #on the side effects of one another, but those
+    #side effects are detrimental to this spec so
+    #we initialize things again for a clean slate.
+    @path = setup_new_git_repo
+    @orig_test_opts = test_opts
+    @ticgitng = TicGitNG.open(@path, @orig_test_opts)
+    num_of_methods= @ticgitng.methods.collect {|m|
+      m if m[/^ticket_/]
+    }.compact.size.-(1).should == 12
+    #ticket_new, ticket_points, ticket_tag
+    ticket=@ticgitng.ticket_new('my new ticket')
+    ticket.class.should == TicGitNG::Ticket
+    ticket.title.should == 'my new ticket'
+    ticket=@ticgitng.ticket_points( 1337, ticket.ticket_id )
+    ticket.class.should == TicGitNG::Ticket
+    ticket.points.should == 1337
+    ticket=@ticgitng.ticket_tag( 'fubar', ticket.ticket_id )
+    ticket.class.should == TicGitNG::Ticket
+    ticket.tags.size.should == 1
+    ticket.tags[0].should == 'fubar'
+    #ticket_attach, ticket_get_attachment,
+    Dir.chdir(File.expand_path( tmp_dir=Dir.mktmpdir('ticgit-ng-gitdir1-') )) do
+        #create a file to attach
+        to_attach= Dir.mktmpdir('to_attach')
+        new_file( attachment_fname=File.join( to_attach, 'fubar.txt' ), "I am the contents of the attachment" )
+        #attach the file
+        ticket= @ticgitng.ticket_attach( attachment_fname, ticket.ticket_id )
+        ticket.class.should == TicGitNG::Ticket
+        ticket.attachments.size.should == 1
+        ticket.attachments[0].attachment_name.should == 'fubar.txt'
+        ticket= @ticgitng.ticket_get_attachment( 'fubar.txt', nil, ticket.ticket_id )
+        ticket.class.should == TicGitNG::Ticket
+        ticket.attachments.size.should == 1
+        ticket.attachments[0].attachment_name.should == 'fubar.txt'
+    end
+    #ticket_assign, ticket_revparse,
+    ticket=@ticgitng.ticket_assign( 'some_random_guy', ticket.ticket_id )
+    ticket.class.should == TicGitNG::Ticket
+    ticket.assigned.should == 'some_random_guy'
+    ticket1=@ticgitng.ticket_revparse( ticket.ticket_id[/[0-9a-z]{5}/] )
+    ticket1.should == ticket.ticket_name
+    #ticket_change, ticket_show,
+    ticket=@ticgitng.ticket_change( 'resolved', ticket.ticket_id )
+    ticket.class.should == TicGitNG::Ticket
+    ticket.state.should == 'resolved'
+    @ticgitng.ticket_change( 'open', ticket.ticket_id )
+    ticket=@ticgitng.ticket_show( ticket.ticket_id )
+    ticket.class.should == TicGitNG::Ticket
+    #ticket_checkout, ticket_list,
+    ticket=@ticgitng.ticket_checkout( ticket.ticket_id )
+    ticket.class.should == TicGitNG::Ticket
+    @ticgitng.current_ticket.should == ticket.ticket_name
+    tickets=@ticgitng.ticket_list
+    tickets.size.should == 1
+    tickets[0].class.should == TicGitNG::Ticket
+    tickets[0].ticket_id.should == ticket.ticket_id
+    #ticket_comment
+    ticket=@ticgitng.ticket_comment( 'fubar fubar fubar', ticket.ticket_id )
+    ticket.comments[0].comment.should == 'fubar fubar fubar'
+  end
+  
+  it "the comment_id should match on a new comment when its re-read"
 
 end

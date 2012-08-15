@@ -25,10 +25,10 @@ module TicGitNG
       @attachments = []
     end
 
-    def self.create(base, title, options = {})
+    def self.create(base, title, options = {}, time=nil)
       t = Ticket.new(base, options)
       t.title = title
-      t.ticket_name = self.create_ticket_name(title)
+      t.ticket_name = self.create_ticket_name(title, time)
       t.save_new
       t
     end
@@ -42,38 +42,45 @@ module TicGitNG
       title, date = self.parse_ticket_name(ticket_name)
       t.opened = date
 
-      ticket_hash['files'].each do |fname, value|
+      ticket_hash['files'].each do |fname, sha|
         if fname == 'TICKET_ID'
-          tid = value
+          tid = sha
         elsif fname == 'TICKET_TITLE'
-          t.title = base.git.gblob(value).contents
+          t.title = base.git.gblob(sha).contents
         else
           # matching
           data = fname.split('_')
 
           case data[0]
           when 'ASSIGNED'
-            t.assigned = data[1]
-          when 'ATTACHMENT'
-            t.attachments << TicGitNG::Attachment.new(base, fname, value)
+            t.assigned = data[1..-1].join('_')
+          when 'ATTACHMENTS'
+              #Attachments dir naming format:
+              #ticket_name/ATTACHMENTS/123456_jeff.welling@gmail.com_fubar.jpg
+              #data[] format:
+              #"ATTACHMENTS_1342116799_jeff.welling@gmail.com_Rakefile".split('_')
+            filename=File.join( 'ATTACHMENTS', fname.gsub(/^ATTACHMENTS_/,'') )
+            t.attachments << TicGitNG::Attachment.new( filename )
           when 'COMMENT'
-            t.comments << TicGitNG::Comment.new(base, fname, value)
+            t.comments << TicGitNG::Comment.read(base, fname, sha)
           when 'POINTS'
-            t.points = base.git.gblob(value).contents.to_i
+            t.points = base.git.gblob(sha).contents.to_i
           when 'STATE'
             t.state = data[1]
           when 'TAG'
             t.tags << data[1]
           when 'TITLE'
-            t.title = base.git.gblob(value).contents
+            t.title = base.git.gblob(sha).contents
           end
         end
       end
 
+      if !t.attachments.class==NilClass and t.attachments.size > 1
+          t.attachments= t.attachments.sort {|a1, a2| a1.added <=> a2.added }
+      end
       t.ticket_id = tid
       t
     end
-
 
     def self.parse_ticket_name(name)
       epoch, title, rand = name.split('_')
@@ -86,7 +93,7 @@ module TicGitNG
       base.in_branch do |wd|
         files=[]
         t=nil
-        base.logger.info "saving #{ticket_name}"
+        base.logger.puts "saving #{ticket_name}"
 
         Dir.mkdir(ticket_name)
         Dir.chdir(ticket_name) do
@@ -149,6 +156,89 @@ module TicGitNG
         base.git.add File.join(ticket_name, t)
         base.git.commit("added comment to ticket #{ticket_name}")
       end
+      @comments << TicGitNG::Comment.new( comment, email, filename )
+      self
+    end
+
+    def add_attach( base, filename, time=nil )
+        filename=File.expand_path(filename)
+        #FIXME Refactor -- Attachment.new should be called from Ticket.rb
+        #               -- Attachment filename creation should be handled
+        #                  by the Attachment.rb code
+        base.in_branch do |wd|
+            attachments << (a=TicGitNG::Attachment.create( filename, self, time))
+            base.git.add File.join( ticket_name, a.filename )
+            base.git.commit("added attachment #{File.basename(a.filename)} to ticket #{ticket_name}")
+        end
+        if attachments.class!=NilClass and attachments.size > 1
+            @attachments=attachments.sort {|a1,a2| a1.added <=> a2.added }
+        end
+        self
+    end
+
+    #file_id can be one of:
+    #  - An index number of the attachment (1,2,3,...)
+    #  - A filename (fubar.jpg)
+    #  - nil (nil) means use the last attachment
+    #
+    #if new_filename is nil, use existing filename
+    def get_attach file_id=nil, new_filename=nil
+        attachment=nil
+        pwd=Dir.pwd
+        base.in_branch do |wd|
+            if file_id.to_i==0 and (file_id=="0" or file_id.class==Fixnum)
+                if !attachments[file_id.to_i].nil?
+                    attachment= attachments[0]
+                else
+                    puts "No attachments match file id #{file_id}"
+                    exit 1
+                end
+            elsif file_id.to_i  > 0
+                if !attachments[file_id.to_i].nil?
+                    attachment= attachments[file_id.to_i]
+                else
+                    puts "No attachments match file id #{file_id}"
+                    exit 1
+                end
+            else
+                #find attachment by filename
+                attachments.each {|a|
+                    attachment=a if a.attachment_name==file_id
+                }
+                if attachment.nil?
+                  puts "No attachments match filename #{file_id}"
+                  exit 1
+                end
+            end
+
+            if !new_filename
+                #if no filename is specified...
+                filename= attachment.attachment_name
+            else
+                #if there is a new_filename given
+                if File.exist?( new_filename ) and File.directory?( new_filename )
+                    #if it is a directory, not a filename
+                    filename= File.join(
+                        new_filename,
+                        File.basename(attachment.attachment_name)
+                    )
+                else
+                    #if it is a filename, not a dir
+                    filename= new_filename
+                end
+            end
+
+            unless File.exist?( File.dirname(filename) )
+                FileUtils.mkdir_p( File.dirname(filename) )
+            end
+            #save attachment [as new_filename]
+            t=File.join( ticket_name, attachment.filename )
+            unless filename[/^\//]
+                filename=File.join( pwd, filename )
+            end
+            FileUtils.cp( t, filename )
+        end
+        self
     end
 
     def change_state(new_state)
@@ -164,6 +254,8 @@ module TicGitNG
         base.git.add File.join(ticket_name, t)
         base.git.commit("added state (#{new_state}) to ticket #{ticket_name}")
       end
+      @state=new_state
+      self
     end
 
     def change_assigned(new_assigned)
@@ -180,6 +272,8 @@ module TicGitNG
         base.git.add File.join(ticket_name,t)
         base.git.commit("assigned #{new_assigned} to ticket #{ticket_name}")
       end
+      @assigned=new_assigned
+      self
     end
 
     def change_comment(replacement_msg, comment_filename, override)
@@ -241,6 +335,8 @@ module TicGitNG
         base.git.add File.join(ticket_name, 'POINTS')
         base.git.commit("set points to #{new_points} for ticket #{ticket_name}")
       end
+      @points=new_points
+      self
     end
 
     def add_tag(tag)
@@ -268,6 +364,10 @@ module TicGitNG
           base.git.commit("added tags (#{tag}) to ticket #{ticket_name}")
         end
       end
+      tags.each {|tag|
+        @tags << tag
+      }
+      self
     end
 
     def remove_tag(tag)
@@ -286,6 +386,8 @@ module TicGitNG
           base.git.commit("removed tags (#{tag}) from ticket #{ticket_name}")
         end
       end
+      @tags.delete_if {|t| t==tag }
+      self
     end
 
     def path
@@ -310,8 +412,8 @@ module TicGitNG
       assigned.split('@').first rescue ''
     end
 
-    def self.create_ticket_name(title)
-      [Time.now.to_i.to_s, Ticket.clean_string(title), rand(999).to_i.to_s].join('_')
+    def self.create_ticket_name(title, time=nil)
+      [time.nil? ? Time.now.to_i.to_s : time, Ticket.clean_string(title), rand(999).to_i.to_s].join('_')
     end
 
     #return true if comment_msg contains \n#Updated_at=#{Time.now.to_s}  tag
@@ -320,6 +422,28 @@ module TicGitNG
       #DateTime can parse Time.now.to_s strings, so if tag is parsable then the tag is valid
       DateTime.parse tag.gsub("#Updated_at=",'') rescue (return false)
       true
+    end
+
+    def create_attachment_name( attachment_name, time=nil )
+        raise ArgumentError, "create_attachment_name( ) only takes a string" unless attachment_name.class==String
+        if time
+            if time.to_i == 0
+                raise ArgumentError, "argument 'time' is not valid"  unless time.class==Fixnum
+            else
+                time=time.to_i
+            end
+        end
+        time or time=Time.now.to_i
+        time.to_s+'_'+email+'_'+File.basename( attachment_name )
+    end
+
+    def ==(ticket2)
+        self.instance_variables.each {|instance_var|
+            unless send( instance_var.gsub('@','').to_sym ) == ticket2.instance_eval {send(instance_var.gsub('@','').to_sym)}
+                return false
+            end
+        }
+        return true
     end
   end
 end

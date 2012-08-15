@@ -22,12 +22,22 @@ module TicGitNG
     def initialize(args, path = '.', out = $stdout)
       @out = out
       @args = args.dup
-      @tic = TicGitNG.open(path, :keep_state => true)
+
+      #set @init if one of the args is 'init'
+      #this needs to be done because initialization of the ticgit branch must be done before
+      #the branch is loaded, but because of the way commands are modularized this must be done
+      #outside of and before the init.rb file itself is called (init.rb is where we would
+      #normally put the code for such a command).
+      args.include?( 'init' ) ? (@init=true) : (@init=false)
+      #@init= ((args[0][/init/]=='init') rescue false)
+      #@init= ((args[0][/init/]=='init') or (args[1][/init/]=='init') rescue false)
+      
+      @tic = TicGitNG.open(path, {:keep_state => true, :init => @init, :logger  => out })
       @options = OpenStruct.new
 
       @out.sync = true # so that Net::SSH prompts show up
     rescue NoRepoFound
-      puts "No repo found"
+      out.puts "No repo found"
       exit
     end
 
@@ -64,7 +74,13 @@ module TicGitNG
         exit 1
       end
 
-      @action = args.shift
+      #FIXME
+      #this is a dirty hack that needs to be fixed
+      if args.include?('list') and args.include?('init')
+        @action = 'list'
+      else
+        @action = args.shift
+      end
     end
 
     def usage(args = nil)
@@ -94,45 +110,62 @@ module TicGitNG
     end
 
     def ticket_show(t, more=nil)
-      days_ago = ((Time.now - t.opened) / (60 * 60 * 24)).round
+        days_ago = ((Time.now - t.opened) / (60 * 60 * 24)).round
 
-      data = [
-        ['Title',    t.title],
-        ['TicId',    t.ticket_id],
-        '',
-        ['Assigned', t.assigned],
-        ['Opened',   "#{t.opened} (#{days_ago} days)"],
-        ['State',    t.state.upcase],
-        ['Points',   t.points || 'no estimate'],
-        ['Tags',     t.tags.join(', ')],
-        ''
-      ]
+        data = [
+            ['Title',    t.title],
+            ['TicId',    t.ticket_id],
+            '',
+            ['Assigned', t.assigned],
+            ['Opened',   "#{t.opened} (#{days_ago} days)"],
+            ['State',    t.state.upcase],
+            ['Points',   t.points || 'no estimate'],
+            ['Tags',     t.tags.join(', ')],
+            ''
+        ]
 
-      data.each do |(key, value)|
-        puts(value ? "#{key}: #{value}" : key)
-      end
-
-      unless t.comments.empty?
-        puts "Comments (#{t.comments.size}):"
-        t.comments.reverse_each do |c|
-          puts "  * Added #{c.added.strftime('%m/%d %H:%M')} by #{c.user}"
-          puts "    Comment ID: #{c.comment_id}"
-
-          wrapped = c.comment.gsub(/\#Updated_at=[^=](.{1,8}\s){4}\d{4}$/,'').split("\n").map{|line|
-            line.length > 80 ? line.gsub(/(.{1,80})(\s+|$)/, "\\1\n").strip : line
-          }.join("\n")
-
-          wrapped = wrapped.split("\n").map{|line| "\t#{line}" }
-
-          if wrapped.size > 6 and more.nil?
-            puts wrapped[0, 6].join("\n")
-            puts "\t** more... **"
-          else
-            puts wrapped.join("\n")
-          end
-          puts
+        data.each do |(key, value)|
+            puts(value ? "#{key}: #{value}" : key)
         end
-      end
+
+        #FIXME display attachments inline chronologically with comments
+        unless t.comments.empty? and t.attachments.empty?
+            comments_and_attachments= Hash.new
+            puts "Comments and attachments (#{t.comments.size + t.attachments.size}):"
+            t.comments.each do |c|
+                comments_and_attachments[c.added]=c
+            end
+            
+            t.attachments.each do |a|
+                comments_and_attachments[a.added]=a
+            end
+            comments_and_attachments.sort.each {|item|
+                if item[1].class==TicGitNG::Comment
+                    #print comment
+                    puts "  * Added #{item[1].added.strftime('%m/%d %H:%M')} by #{item[1].user}"
+
+                    wrapped = item[1].comment.split("\n").map{|line|
+                        line.length > 80 ? line.gsub(/(.{1,80})(\s+|$)/, "\\1\n").strip : line
+                    }.join("\n")
+
+                    wrapped = wrapped.split("\n").map{|line| "\t#{line}" }
+
+                    if wrapped.size > 6 and more.nil?
+                        puts wrapped[0, 6].join("\n")
+                        puts "\t** more... **"
+                    else
+                        puts wrapped.join("\n")
+                    end
+                    puts
+                else
+                    #print attachment
+                    puts "  * Added #{item[1].added.strftime('%m/%d %H:%M')} by #{item[1].user}"
+                    puts "    Attachment: #{t.attachments.index(item[1]) }"
+                    puts "    Filename:   #{item[1].attachment_name}"
+                    puts
+                end
+            }
+        end
     end
 
     class << self
@@ -202,7 +235,7 @@ module TicGitNG
         value = value.to_s
 
         if value.bytesize > size
-          sub_value = "#{value[0, size - 1]}\xe2\x80\xa6"
+          sub_value = "#{value[0, size - 1]}+"
         else
           sub_value = value[0, size]
         end
@@ -214,7 +247,7 @@ module TicGitNG
         chars = value.to_s.scan(/./um)
 
         if chars.size > size
-          sub_value = "#{chars[0, size-1]}\xe2\x80\xa6"
+          sub_value = "#{chars[0, size-1]}+"
         else
           sub_value = chars.join
         end
@@ -239,4 +272,8 @@ module TicGitNG
 end
 
 TicGitNG::CLI.reset_window_width
-Signal.trap("SIGWINCH") { TicGitNG::CLI.reset_window_width }
+begin
+    Signal.trap("SIGWINCH") { TicGitNG::CLI.reset_window_width }
+rescue
+    TicGitNG::CLI.use_fallback
+end

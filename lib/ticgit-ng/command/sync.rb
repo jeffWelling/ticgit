@@ -32,6 +32,7 @@ module TicGitNG
           
         else
           #sync with TicGit
+        begin
           if options.repo and options.no_push
             tic.sync_tickets(options.repo, false)
           elsif options.repo
@@ -41,7 +42,13 @@ module TicGitNG
           else
             tic.sync_tickets()
           end
-        end
+        rescue Git::GitExecuteError => e
+          if e.message[/does not appear to be a git repository/]
+            repo= e.message.split("\n")[0][/^[^:]+/][/"\w+"/].gsub('"','')
+            puts "Could not sync because git returned the following error:\n#{e.message.split("\n")[0][/[^:]+$/].strip}"
+            exit
+          end
+        end 
       end
     end
   end

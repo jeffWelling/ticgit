@@ -13,8 +13,9 @@ module TicGitNG
     register 'Attach', 'Attach file to ticket', 'attach'
     register 'Checkout', 'Checkout a ticket', 'checkout', 'co'
     register 'Comment', 'Comment on a ticket', 'comment'
+    register 'Help', 'Show help for a ticgit command', 'help'
     register 'List', 'List tickets', 'list'
-    register 'Milestone', 'List and modify milestones', 'milestone'
+#    register 'Milestone', 'List and modify milestones', 'milestone'
     register 'New', 'Create a new ticket', 'new'
     register 'Points', 'Assign points to a ticket', 'points'
     register 'Recent', 'List recent activities', 'recent'
@@ -24,6 +25,7 @@ module TicGitNG
     register 'Tag', 'Modify tags of a ticket', 'tag'
     register 'Title', 'Modify the title of a ticket', 'title'
     register 'Sync', 'Sync tickets', 'sync'
+    register 'Init', 'Initialize Ticgit-ng', 'init'
 
     def self.get(command)
       if mod_name = COMMANDS[command]

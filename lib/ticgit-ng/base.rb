@@ -10,26 +10,67 @@ module TicGitNG
 
     def initialize(git_dir, opts = {})
       @git = Git.open(find_repo(git_dir))
+
+      begin
+        git.lib.full_log_commits 1
+      rescue
+        puts "Git error: please check your git repository, you must have at least one commit in git"
+        exit 1
+      end
+
+      @logger = opts[:logger] || Logger.new(STDOUT)
+
+      #This is to accomodate for edge-cases where @logger.puts
+      #is called from debugging code.
+      if @logger.respond_to?(:puts) && !@logger.respond_to?(:info)
+        @logger.class.class_eval do
+          alias :info :puts
+        end
+      elsif @logger.respond_to?(:info) && !@logger.respond_to?(:puts)
+        @logger.class.class_eval do
+          alias :puts :info
+        end
+      end
+         
+      @last_tickets = []
+      @init=opts[:init]
+
       proj = Ticket.clean_string(@git.dir.path)
 
-      @tic_dir = opts[:tic_dir] || "~/.#{which_branch?}"
+      #Use this hack instead of git itself because this is ridiculously faster then
+      #getting the same information from git
+      branches= Dir.entries( File.join(find_repo(git_dir),'.git/refs/heads/') ).delete_if {|i|
+        i=='.' || i=='..'
+      }
+      branch= branches.include?('ticgit-ng') ? ('ticgit-ng') : ('ticgit')
+
+      @tic_dir = opts[:tic_dir] ||"~/.#{branch}"
       @tic_working = opts[:working_directory] || File.expand_path(File.join(@tic_dir, proj, 'working'))
       @tic_index = opts[:index_file] || File.expand_path(File.join(@tic_dir, proj, 'index'))
 
-      @logger = opts[:logger] || Logger.new(STDOUT)
       @last_tickets = []
 
-      #expire @tic_index and @tic_working if it mtime is older than git log
-      puts "Started"
+      #expire @tic_index and @tic_working if it mtime is older than 
+      #git log.  Otherwise, during testing, if you use the same temp
+      #directory with the same name, deleting it and recreating it
+      #to test something, ticgit would get confused by the cache from
+      #the previous instance of the temp dir.
       if File.exist?(@tic_working)
-        puts "Inside"
         cache_mtime=File.mtime(@tic_working)
-        gitlog_mtime=git.gblob(which_branch?).log(1).map {|l| l.committer.date }[0]
-        #unless (cache_mtime > gitlog_mtime.-(20) and cache_mtime <= gitlog_mtime) or (cache_mtime > gitlog_mtime.+(30) and cache_mtime >= gitlog_mtime)
-        if ((cache_mtime.to_i - gitlog_mtime.to_i) > 120) or ((gitlog_mtime.to_i - cache_mtime.to_i) > 120)
-          puts "Resetting cache"
-          reset_cache unless cache_mtime==gitlog_mtime
+        begin
+          gitlog_mtime= File.mtime(File.join( find_repo('.'), ".git/refs/heads/#{branch}" ))
+        rescue
+          reset_cache
         end
+
+        #unless (cache_mtime > gitlog_mtime.-(20) and cache_mtime <= gitlog_mtime) or (cache_mtime > gitlog_mtime.+(30) and cache_mtime >= gitlog_mtime)
+        #FIXME break logic out into several lines
+        #FIXME don't bother resetting if gitlog_mtime.to_i == 0
+        if needs_reset?( cache_mtime, gitlog_mtime ) and !cache_mtime==gitlog_mtime
+          puts "Resetting cache" unless gitlog_mtime.to_i == 0
+          reset_cache
+        end
+
       end
 
       # load config file
@@ -41,6 +82,21 @@ module TicGitNG
       end
 
       @state = File.expand_path(File.join(@tic_dir, proj, 'state'))
+
+      unless branches.include?(branch) && File.directory?(@tic_working)
+        if branches.include?(branch) and !File.exist?(@tic_working)
+          #branch exists but tic_working doesn't
+          #this could be because the dir was deleted or the repo itself
+          #was moved, so recreate the dir.
+          reset_ticgitng
+        elsif @init
+          puts "Initializing TicGit-ng"
+          init_ticgitng_branch( branches.include?(branch) )
+        else
+          puts "Please run `ti init` to initialize TicGit-ng for this repository before running other ti commands."
+          exit
+        end
+      end
 
       if File.file?(@state)
         #populate @last_tickets, @current_ticket
@@ -62,6 +118,9 @@ module TicGitNG
     # save config file
     def save_state
       state_list = [@last_tickets, @current_ticket]
+      unless File.exist? @state
+        FileUtils.mkdir_p( File.dirname(@state) )
+      end
       File.open(@state, 'w+'){|io| Marshal.dump(state_list, io) }
       File.open(@config_file, 'w+'){|io| io.write(config.to_yaml) }
     end
@@ -81,8 +140,8 @@ module TicGitNG
     end
 
     # returns new Ticket
-    def ticket_new(title, options = {})
-      t = TicGitNG::Ticket.create(self, title, options)
+    def ticket_new(title, options = {}, time=nil)
+      t = TicGitNG::Ticket.create(self, title, options, time)
       reset_ticgitng
       TicGitNG::Ticket.open(self, t.ticket_name, tickets[t.ticket_name])
     end
@@ -100,6 +159,7 @@ module TicGitNG
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
         ticket.add_comment(comment)
         reset_ticgitng
+        ticket
       end
     end
     
@@ -199,7 +259,6 @@ module TicGitNG
       end
 
       @last_tickets = ts.map{|t| t.ticket_name }
-      # :save
 
       save_state
       ts
@@ -276,6 +335,7 @@ module TicGitNG
           ticket.add_tag(tag)
         end
         reset_ticgitng
+        ticket
       end
     end
 
@@ -285,6 +345,7 @@ module TicGitNG
           ticket = TicGitNG::Ticket.open(self, t, tickets[t])
           ticket.change_state(new_state)
           reset_ticgitng
+          ticket
         end
       end
     end
@@ -294,6 +355,7 @@ module TicGitNG
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
         ticket.change_assigned(new_assigned)
         reset_ticgitng
+        ticket
       end
     end
 
@@ -310,6 +372,7 @@ module TicGitNG
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
         ticket.change_points(new_points)
         reset_ticgitng
+        ticket
       end
     end
 
@@ -318,13 +381,8 @@ module TicGitNG
         ticket = TicGitNG::Ticket.open(self, t, tickets[t])
         @current_ticket = ticket.ticket_name
         save_state
+        ticket
       end
-    end
-
-    def comment_add(ticket_id, comment, options = {})
-    end
-
-    def comment_list(ticket_id)
     end
 
     def tic_states
@@ -354,30 +412,29 @@ module TicGitNG
     def read_tickets
       tickets = {}
 
-      bs = git.lib.branches_all.map{|b| b.first }
-
-      #FIXME Whatsis? Why the duplication?
-      unless (bs.include?(which_branch?) || bs.include?(which_branch?))  &&
-              File.directory?(@tic_working)
-        init_ticgitng_branch(bs.include?(which_branch?))
-      end
-
       tree = git.lib.full_tree(which_branch?)
       tree.each do |t|
         data, file = t.split("\t")
         mode, type, sha = data.split(" ")
         tic = file.split('/')
         if tic.size == 2  # directory depth
-          ticket, info = tic
-          tickets[ticket] ||= { 'files' => [] }
-          tickets[ticket]['files'] << [info, sha]
+            ticket, info = tic
+            tickets[ticket] ||= { 'files' => [] }
+            tickets[ticket]['files'] << [info, sha]
+        elsif tic.size == 3
+            ticket, attch_dir, filename = tic
+            if filename
+                filename = 'ATTACHMENTS_' + filename
+                tickets[ticket] ||= { 'files' => [] }
+                tickets[ticket]['files'] << [filename, sha]
+            end
         end
       end
       tickets
     end
 
     def init_ticgitng_branch(ticgitng_branch = false)
-      @logger.info 'creating ticgit-ng repo branch'
+      @logger << 'creating ticgit-ng repo branch'
 
       in_branch(ticgitng_branch) do
         #The .hold file seems to have little to no purpose aside from helping
@@ -423,25 +480,53 @@ module TicGitNG
     def new_file(name, contents)
       File.open(name, 'w+'){|f| f.puts(contents) }
     end
+
     def which_branch?
+      #At present use the 'ticgit' branch for backwards compatibility
       branches=@git.branches.local.map {|b| b.name}
       if branches.include? 'ticgit-ng'
         return 'ticgit-ng'
       else
         return 'ticgit'
       end
+
       #If has ~/.ticgit dir, and 'ticgit' branch
       #If has ~/.ticgit-ng dir, and 'ticgit-ng' branch, and not ~/.ticgit dir and not 'ticgit' branch
     end
 
     def reset_cache
       #@state, @tic_index, @tic_working
+      #A rescue is appended to the end of each line because it allows
+      #execution of others to continue upon failure, as opposed to
+      #a begin;rescue;end segment.
+      FileUtils.rm_r File.expand_path(@tic_working) rescue nil
       FileUtils.rm File.expand_path(@state) rescue nil
       FileUtils.rm File.expand_path(@tic_index) rescue nil
-      FileUtils.rm_r File.expand_path(@tic_working) rescue nil
+      FileUtils.mkdir_p File.expand_path(@tic_working) rescue nil
       @state=nil
-      FileUtils.mkdir_p File.expand_path(@tic_working)
     end
 
+    def needs_reset? cache_mtime, gitlog_mtime
+      ((cache_mtime.to_i - gitlog_mtime.to_i) > 120) or ((gitlog_mtime.to_i - cache_mtime.to_i) > 120)
+    end
+    
+    def ticket_attach filename, ticket_id=nil, time=nil
+        t = ticket_revparse( ticket_id )
+        ticket= TicGitNG::Ticket.open( self, t, tickets[t] )
+        ticket.add_attach( self, filename, time )
+        reset_ticgitng
+        ticket
+    end
+
+    #ticket_get_attachment()
+    #file_id -      return the attachment identified by file_id
+    #new_filename - save the attachment as new_filename
+    #ticket_id -    get the attachment from ticket_id instead of current
+    def ticket_get_attachment file_id=nil, new_filename=nil, ticket_id=nil 
+        if t = ticket_revparse(ticket_id)
+            ticket = Ticket.open( self, t, tickets[t] )
+            ticket.get_attach( file_id, new_filename )
+        end
+    end
   end
 end

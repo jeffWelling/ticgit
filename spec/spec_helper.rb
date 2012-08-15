@@ -10,10 +10,8 @@ module TicGitNGSpecHelper
 =begin
 tempdir -
   test => "content"
-
   subdir -
     testfile => "content2"
-
 =end
   def setup_new_git_repo prefix='ticgit-ng-gitdir-'
     tempdir = Dir.mktmpdir prefix
@@ -31,7 +29,7 @@ tempdir -
   def test_opts
     tempdir = Dir.mktmpdir 'ticgit-ng-ticdir-'
     logger = Logger.new(Tempfile.new('ticgit-ng-log-'))
-    { :tic_dir => tempdir, :logger => logger }
+    { :tic_dir => tempdir, :logger => logger, :init => true }
   end
 
 
@@ -45,11 +43,11 @@ tempdir -
     string.enum_for(:each_line).map{|line| line.strip }
   end
 
-  def cli(*args, &block)
+  def cli(path, *args, &block)
     TICGITNG_HISTORY.truncate 0
     TICGITNG_HISTORY.rewind
 
-    ticgitng = TicGitNG::CLI.new(args.flatten, @path, TICGITNG_HISTORY)
+    ticgitng = TicGitNG::CLI.new(args.flatten, path, TICGITNG_HISTORY)
     ticgitng.parse_options!
     ticgitng.execute!
 
@@ -66,6 +64,16 @@ tempdir -
       yield(line.strip)
     end
   end
+    
+    def read_line_of filename 
+        File.open(filename, "r").each_line do |line|
+          return line
+        end
+    end
+
+      def time_skew
+          Time.now.to_i + rand(1000)
+      end
 
 end
 
@@ -109,5 +117,4 @@ class Hash
   def only(*keys)
     self.reject { |k,v| !keys.include?(k || k.to_sym) }
   end
-
 end

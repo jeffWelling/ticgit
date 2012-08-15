@@ -13,17 +13,14 @@ module TicGitNG
           puts 'remove'
         end
 
-        if ARGV.size > 3
-          tid = ARGV[1].chomp
-          tic.ticket_tag(ARGV[3].chomp, tid, options)
-        elsif ARGV.size > 2 #tag 
-          tic.ticket_tag(ARGV[2], nil, options)
-				elsif ARGV.size == 2 #tag add 'tag_foobar'
-					tic.ticket_tag(ARGV[1], nil, options)
+        if ARGV.size > 2 # `ti tag 1234abc tagname1`
+          tic.ticket_tag(ARGV[2], ARGV[1].chomp, options)
+        elsif ARGV.size == 2 # `ti tag tagname1`
+          tic.ticket_tag(ARGV[1], nil, options)
         else
           puts 'You need to at least specify one tag to add'
           puts
-          puts parser
+          puts usage
         end
       end
     end
