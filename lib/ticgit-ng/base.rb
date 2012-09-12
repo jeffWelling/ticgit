@@ -12,7 +12,7 @@ module TicGitNG
       @git = Git.open(find_repo(git_dir))
 
       begin
-        git.lib.full_log_commits 1
+        git.lib.full_log_commits :count => 1
       rescue
         puts "Git error: please check your git repository, you must have at least one commit in git"
         exit 1
