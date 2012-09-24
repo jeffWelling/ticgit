@@ -4,6 +4,9 @@ module TicGitNG
 
     def initialize( c, user, filename, time=nil )
       raise unless c
+      unless c.class==String and user.class==String and filename.class==String and (time.class==NilClass or time.class==Time)
+        raise "Comment.new: invalid paramaters -- #{c.class}, #{user.class}, #{filename.class}, #{time.class}"
+      end
       @comment= c
       @user=user
       @added= time.nil? ? Time.now : time
