@@ -102,11 +102,12 @@ def layout(title, content)
   %Q(
 %html
   %head
-    %title #{title}
+    %title #{File.basename(Dir.pwd)}:#{title}
     %link{:rel => 'stylesheet', :href => '/_stylesheet.css', :type => 'text/css', :media => 'screen'}
     %meta{'http-equiv' => 'Content-Type', :content => 'text/html; charset=utf-8'}
 
   %body
+    %h1 #{File.basename(Dir.pwd)} (#{Dir.pwd})
     #navigation
       %a{:href => '/'} All
       %a{:href => '/fs/open'} Open
