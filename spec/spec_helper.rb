@@ -65,16 +65,32 @@ tempdir -
     end
   end
     
-    def read_line_of filename 
-        File.open(filename, "r").each_line do |line|
-          return line
-        end
+  def read_line_of filename 
+    File.open(filename, "r").each_line do |line|
+      return line
     end
+  end
 
-      def time_skew
-          Time.now.to_i + rand(1000)
+  def time_skew
+    Time.now.to_i + rand(1000)
+  end
+
+  def small_repo tg, n=6
+    n.times do |t_i|
+      tic=tg.ticket_new( 'ticket_title -- ' + rand_str(8) )
+      rand( 6 ).times do |c_i|
+        tg.ticket_comment( 'comment -- ' + rand_str(6), tic.ticket_id )
       end
+    end
+  end
 
+  def big_repo tg
+    small_repo tg, 100
+  end
+
+  def rand_str i
+    (0...i.to_i).map{ ('a'..'z').to_a[rand(26)] }.join
+  end
 end
 
 
@@ -117,4 +133,6 @@ class Hash
   def only(*keys)
     self.reject { |k,v| !keys.include?(k || k.to_sym) }
   end
+
+
 end

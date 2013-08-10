@@ -1,0 +1,51 @@
+git.lib.branches_all
+  #repo.ref_names
+git.gblob(sha).contents
+  #sha=repo.lookup( repo.head.target ).tree[2][:oid]
+  #content=repo.lookup( sha ).content
+git.config
+  #repo.config.to_hash
+git.add filename
+  #repo.index.add 'fubar'
+  #sha=repo.index.write_tree
+git.commit "Changed Foo to Bar"
+    #http://jeffwelling.github.com//2012/09/26/How-to-commit-with-rugged.html
+git.remove filename
+    #index.reload
+    #index.remove 0      #0 being the index of the index-item in index[]
+    #index.write         #unstage the file
+git.log.object ticket_name
+git.log.object('ticgit').path(t)
+    # In order to switch to Rugged, there are a number of files that need to be rewritten
+    # because they are too closely coupled with the Git gem:
+    #   lib/ticgit-ng/commands/recent.rb    => lib/ticgit-ng/base.rb:279[base.ticket_recent] => git.log.object
+    #   lib/ticgit-ng/ticket.rb:410             => git.log.object
+Git.open find_repo(git_dir)
+    #repo=Rugged::Repository.new find_repo(git_dir)
+git.dir.path
+    #File.dirname(repo.path)
+git.fetch repo
+		#UNAVAILABLE
+		#Substitute functionality with the git gem or bash callouts
+		#Exclude sync functionality at this time
+git.branches.remote
+		#Only used by sync code, no substitute found yet
+		#Exclude sync functionality at this time
+git.remote repo
+		#Only used by sync code, no substitute found yet
+		#Exclude sync functionality at this time
+git.pull remote_repo, 'repo/branch'
+		#UNAVAILABLE
+		#Only used by sync code, no substitute found yet
+		#Exclude sync functionality at this time
+git.push remote_repo, 'repo/branch'
+		#UNAVAILABLE
+		#Only used by sync code, no substitute found yet
+		#Exclude sync functionality at this time
+git.lib.full_tree 'ticgit'
+git.lib.branch_current
+git.lib.change_head_branch 'ticgit'
+#git.with_index index_filename
+#git.with_working working_dir_name
+git.lib.checkout 'ticgit'
+git.branches.local

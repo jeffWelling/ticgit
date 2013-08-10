@@ -54,5 +54,44 @@ describe TicGitNG::Base do
     true.should == ((t1_after-t1_before) < 5)
     true.should == ((t2_after-t2_before) < 5)
   end
+  it "Should scale reasonaly well" do
+    t1_before=0
+    t1_after=0
+    t2_before=0
+    t2_after=0
+    path1= setup_new_git_repo
+    Dir.chdir( path1 ) do
+      tg=TicGitNG.open( path1, test_opts )
+      small_repo tg
+      #test a small repo
+      #do this a couple times to make it a bit fairer re caching
+      10.times do
+        t1_before=Time.now.to_i
+        tg=TicGitNG.open( path1, test_opts )
+        tg.ticket_list
+        t1_after=Time.now.to_i
+      end
+    end
+
+    path2= setup_new_git_repo
+    Dir.chdir( path2 ) do
+      tg=TicGitNG.open( '.', test_opts )
+      big_repo tg
+      #do this a couple times to make it fairer re caching
+      10.times do
+        t2_before=Time.now.to_i
+        tg=TicGitNG.open( path2, @orig_test_opts )
+        tg.ticket_list
+        t2_after=Time.now.to_i
+      end
+    end
+
+    puts "First test difference : #{(t1_after-t1_before)}"
+    puts "Second test difference: #{(t2_after-t2_before)}"
+
+    #FIXME Fix this dirty hack, find out what the proper way to do this is
+    true.should == ((t1_after-t1_before) < 5)
+    true.should == ((t2_after-t2_before) < 5)
+  end
 
 end
