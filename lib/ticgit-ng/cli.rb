@@ -191,7 +191,7 @@ module TicGitNG
           self.window_lines, self.window_cols = buf.unpack("S2")
           true
         end
-      rescue Errno::EINVAL
+      rescue Errno::EINVAL, Errno::ENOTTY
       end
 
       def try_windows
