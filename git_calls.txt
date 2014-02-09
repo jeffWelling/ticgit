@@ -43,6 +43,13 @@ git.push remote_repo, 'repo/branch'
 		#Only used by sync code, no substitute found yet
 		#Exclude sync functionality at this time
 git.lib.full_tree 'ticgit'
+    $git.lib.full_tree "ticgit"
+    => ["100644 blob d59825fe54c6995d482ccda9243f0a607d2ed44d\t.hold"]
+    x=repo.ref("refs/heads/ticgit")
+    repo.lookup(x.target).tree[0]
+    => {:name=>".hold", :oid=>"d59825fe54c6995d482ccda9243f0a607d2ed44d", :filemode=>33188, :type=>:blob}
+    repo.lookup(x.target).tree[0][:filemode].to_s(base=8)
+    => "100644"
 git.lib.branch_current
 git.lib.change_head_branch 'ticgit'
 #git.with_index index_filename
